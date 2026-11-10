@@ -699,9 +699,12 @@
           const onAttr = effective === "on" || effective === "open" ? "true"
                       : effective === "off" || effective === "closed" ? "false"
                       : "unset";
+          const isSwitch = /^(light|switch|input_boolean)\./.test(eid);
+          const display = isSwitch ? (stale ? "UNAVAILABLE" : onAttr === "true" ? "ON" : onAttr === "false" ? "OFF" : esc(fmtState(s))) : (s ? esc(fmtState(s)) : "—");
           return `
-            <div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="entity" data-eid="${esc(eid)}" data-on="${onAttr}" data-stale="${stale}">
-              <div class="value">${s ? esc(fmtState(s)) : "—"}</div>
+            <div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="entity" data-eid="${esc(eid)}" data-on="${onAttr}" data-switch="${isSwitch}" data-stale="${stale}">
+              ${isSwitch ? '<span class="stitchell-toggle" aria-hidden="true"></span>' : ""}
+              <div class="value">${display}</div>
               <div class="name">${esc(name)}</div>
             </div>
           `;
