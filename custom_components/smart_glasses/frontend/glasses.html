@@ -708,6 +708,21 @@
       `;
     }
 
+    function actionSymbol(item) {
+      const label = (item.name || "").toLowerCase();
+      const command = (item.action || "").toLowerCase();
+      if (/spooky|halloween|ghost/.test(label)) return "✦";
+      if (/movie|cinema/.test(label)) return "▣";
+      if (/pause/.test(label + command)) return "Ⅱ";
+      if (/play|start|resume/.test(label + command)) return "▶";
+      if (/stop|off/.test(label + command)) return "■";
+      if (/volume.*(up|plus)|louder/.test(label + command)) return "+";
+      if (/volume.*(down|minus)|quieter/.test(label + command)) return "−";
+      if (/mute/.test(label + command)) return "♪";
+      if (/party|dance|rainbow/.test(label)) return "✧";
+      return "✦";
+    }
+
     function renderGrid() {
       if (cards.length === 0 || !cards[currentCardIndex] || !cards[currentCardIndex].items || cards[currentCardIndex].items.length === 0) {
         renderTabs();
@@ -734,7 +749,7 @@
           // name describes what it does, below it.
           return `
             <div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="action" data-on="unset" data-stale="false">
-              <div class="value">ACT</div>
+              <div class="value">${actionSymbol(item)}</div>
               <div class="name">${esc(item.name)}</div>
             </div>
           `;
