@@ -319,31 +319,43 @@
       if (!card) return [];
       const configured = card.items || [];
       const find = (id) => configured.find(x => x.entity_id === id) || ENTITY(id);
+      const isRoom = (id, pattern) => card.id === id || pattern.test(card.name || "");
       if (detailScreen === "remote") {
-        const tv = card.id === "master" ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
-        return [NAV("Back to Room","back"),find(tv),
-          ACTION("Play","media_player.media_play",tv),
-          ACTION("Pause","media_player.media_pause",tv),
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
+        return [NAV("Back to Room","back"), find(tv),
+          ACTION("Power","media_player.toggle",tv),
           ACTION("Volume +","media_player.volume_up",tv),
           ACTION("Volume −","media_player.volume_down",tv),
-          ACTION("Mute","media_player.volume_mute",tv),
-          NAV("More Controls","remote-help")];
+          ACTION("Play","media_player.media_play",tv),
+          ACTION("Pause","media_player.media_pause",tv),
+          ACTION("Mute","media_player.volume_mute",tv)];
       }
-      if (detailScreen === "remote-help") return [NAV("Back","remote"),NAV("Back to Room","back")];
-      if (detailScreen === "scenes") return [NAV("Back to Room","back"),...configured.filter(x=>x.type==="action" || x.entity_id?.startsWith("scene.") || x.entity_id?.startsWith("script.")).slice(0,7)];
-      if (detailScreen === "music") return [NAV("Back to Room","back"),...configured.filter(x=>x.entity_id?.startsWith("media_player.") || x.type==="action").slice(0,7)];
-      if (card.id === "living" || /living room/i.test(card.name)) return [
-        find("light.living_room"),find("light.tv_lights"),NAV("TV Remote","remote"),find("light.fireplace_drawer")];
-      if (card.id === "kitchen" || /kitchen/i.test(card.name)) return [
-        find("switch.kitchen_switch_switch_1"),find("light.stitchell_kitchen_lights"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
-      if (card.id === "dining" || /dining room/i.test(card.name)) return [
-        find("switch.island_lights_switch_1"),find("light.stitchell_island_lights")];
-      if (card.id === "master" || /master bedroom/i.test(card.name)) return [
-        find("light.stitchell_master_bedroom_lights"),find("light.stitchell_master_closet_lights"),NAV("Bedroom TV","remote"),NAV("Lighting Scenes","scenes")];
-      if (card.id === "outdoor" || /outdoor/i.test(card.name)) return [
-        find("light.stitchell_front_outdoor_lights"),find("light.stitchell_back_outdoor_lights"),NAV("Lighting Effects","scenes"),find("light.front_patio_1")];
-      if (/karson/i.test(card.name)) return [
-        ...configured.filter(x=>x.entity_id?.startsWith("light.")).slice(0,2),NAV("Lighting Effects","scenes"),NAV("Music","music")];
+      if (detailScreen === "scenes") {
+        const room = (card.name || "").toLowerCase();
+        const scenes = cards.flatMap(c => c.items || []).filter(x =>
+          x.type === "action" && /script\.(stitchell_spooky_loop|stitchell_spooky_stop|stitchell_movie_mode)/.test(x.target || ""));
+        const selected = isRoom("living",/living room/i) ? scenes :
+          configured.filter(x => x.type === "action" || /^scene\.|^script\./.test(x.entity_id || ""));
+        return [NAV("Back to Room","back"), ...selected.slice(0,7)];
+      }
+      if (isRoom("living", /living room/i)) return [
+        find("switch.living_room_switch_switch_1"), find("light.living_room"),
+        NAV("TV Remote","remote"), NAV("Scenes","scenes"),
+        find("light.tv_lights"), find("light.fireplace_drawer")];
+      if (isRoom("kitchen", /kitchen/i)) return [
+        find("switch.kitchen_switch_switch_1"), find("light.stitchell_kitchen_lights"), NAV("Scenes","scenes")];
+      if (isRoom("dining", /dining room/i)) return [
+        find("switch.island_lights_switch_1"), find("light.stitchell_island_lights"), NAV("Scenes","scenes")];
+      if (isRoom("master", /master bedroom/i)) return [
+        find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
+        NAV("TV Remote","remote"), NAV("Scenes","scenes")];
+      if (isRoom("outdoor", /outdoor/i)) return [
+        find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
+        NAV("Patio Lights","patio"), NAV("Scenes","scenes")];
+      if (detailScreen === "patio") return [NAV("Back to Room","back"),
+        find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
+      if (isRoom("garage", /garage/i)) return [
+        find("light.stitchell_garage_lights"), NAV("Scenes","scenes")];
       return configured;
     }
     function openDetail(page) {
@@ -715,6 +727,7 @@
       // Match the service name, not the media_player domain:
       // "media_player" contains "play" and previously made every action ▶.
       const service = (item.action || "").toLowerCase().split(".").pop();
+      if (service === "toggle" && /power/i.test(label)) return "⏻";
       if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
       if (service === "volume_down" || /volume\s*(−|-|down|minus)|quieter/.test(label)) return "−";
       if (service === "volume_mute" || /mute/.test(label)) return "♪";
@@ -727,7 +740,7 @@
       return "✦";
     }
     function renderGrid() {
-      if (cards.length === 0 || !cards[currentCardIndex] || !cards[currentCardIndex].items || cards[currentCardIndex].items.length === 0) {
+      if (cards.length === 0 || !cards[currentCardIndex] || visibleItems().length === 0) {
         renderTabs();
         showPanel("empty");
         return;
@@ -747,6 +760,10 @@
       $grid.innerHTML = items.map((item, idx) => {
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
         const armedCls = (idx === armedIdx) ? " armed" : "";
+        if (item.type === "nav") {
+          const symbol = item.page === "back" ? "←" : item.page === "remote" ? "▣" : item.page === "patio" ? "☼" : "✦";
+          return `<div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="nav" data-on="unset" data-stale="false"><div class="value">${symbol}</div><div class="name">${esc(item.name)}</div></div>`;
+        }
         if (item.type === "action") {
           // Action items: the verb (ACT) is the headline; the friendly
           // name describes what it does, below it.
@@ -759,7 +776,7 @@
         } else {
           const eid = item.entity_id;
           const s = states.get(eid);
-          const name = eid === "switch.island_lights_switch_1" ? "Island Lights" : (s?.attributes?.friendly_name || eid);
+          const name = eid === "switch.island_lights_switch_1" ? "Island Switch" : (s?.attributes?.friendly_name || eid);
           // Effective state for color + stale flag: the server-derived
           // group state when available, otherwise HA's reported state.
           const derived = s?._smart_glasses?.derived_state;
@@ -898,7 +915,7 @@
       if (action === "tab-next") { switchCard( 1); return; }
       // Tapping the active card name drops into cells mode (mirrors the
       // swipe-down gesture and Down/Enter in tabs mode).
-      const items = cards[currentCardIndex]?.items ?? [];
+      const items = visibleItems();
       if (items.length > 0) {
         focusMode = "cells";
         focusedCellIndex = 0;
