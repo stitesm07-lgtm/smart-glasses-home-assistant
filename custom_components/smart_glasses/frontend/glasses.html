@@ -335,7 +335,7 @@
       if (card.id === "living" || /living room/i.test(card.name)) return [
         find("light.living_room"),find("light.tv_lights"),NAV("TV Remote","remote"),find("light.fireplace_drawer")];
       if (card.id === "kitchen" || /kitchen/i.test(card.name)) return [
-        find("light.stitchell_kitchen_lights"),find("light.stitchell_island_lights"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
+        find("light.stitchell_kitchen_lights"),find("switch.island_lights_switch_1"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
       if (card.id === "master" || /master bedroom/i.test(card.name)) return [
         find("light.stitchell_master_bedroom_lights"),find("light.stitchell_master_closet_lights"),NAV("Bedroom TV","remote"),NAV("Lighting Scenes","scenes")];
       if (card.id === "outdoor" || /outdoor/i.test(card.name)) return [
@@ -756,7 +756,7 @@
         } else {
           const eid = item.entity_id;
           const s = states.get(eid);
-          const name = s?.attributes?.friendly_name || eid;
+          const name = eid === "switch.island_lights_switch_1" ? "Island Lights" : (s?.attributes?.friendly_name || eid);
           // Effective state for color + stale flag: the server-derived
           // group state when available, otherwise HA's reported state.
           const derived = s?._smart_glasses?.derived_state;
