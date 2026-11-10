@@ -35,6 +35,28 @@
     }
 
     #app { width: 600px; height: 600px; display: flex; flex-direction: column; }
+    /* Stitchell Glass: compact black-and-gold HUD, retaining original controls. */
+    #brand { flex: 0 0 auto; text-align: center; padding: 9px 18px 5px;
+      border-bottom: 1px solid #806329; letter-spacing: 3px; }
+    #brand strong { color: #f5d37c; font-size: 23px; }
+    #brand small { display: block; font-size: 12px; letter-spacing: 1.4px; color: #baa46b; }
+    #brand-time { float: right; letter-spacing: 0; font-size: 15px; color: #dfc78b; padding-top: 6px; }
+    .cell { background: rgba(50,37,15,.66); border: 2px solid #9b7834; }
+    .cell[data-on="true"] { background: rgba(91,64,19,.65); border-color: #e5bc56; }
+    .cell.focused { border-color: #fff2be; background: rgba(106,78,29,.6); }
+    .cell .name { color: #ebd6a3; font-size: 17px; }
+    .cell[data-switch="true"] .value { font-size: 27px !important; }
+    .cell .stitchell-toggle { display: block; position: relative; width: 70px; height: 36px;
+      border-radius: 22px; border: 2px solid #9c8658; background: #48423a; }
+    .cell .stitchell-toggle::after { content: ""; position: absolute; width: 24px; height: 24px;
+      top: 4px; left: 5px; background: #d2c5a6; border-radius: 50%; }
+    .cell[data-on="true"] .stitchell-toggle { background: #bd9137; border-color: #f4cd6b; }
+    .cell[data-on="true"] .stitchell-toggle::after { left: 36px; background: #fff2c3; }
+    .cell[data-stale="true"] .stitchell-toggle { opacity: .45; }
+    #tabs .tab-name { color: #f5d37c; }
+    .tab-dots .dot.active { background: #f5d37c; }
+    #pair h1 { color: #f5d37c; }
+
 
     /* Tab strip across the top:
          ┌────────────────────────────────────────────┐
@@ -203,7 +225,7 @@
   </style>
 </head>
 <body>
-  <main id="app">
+  <main id="app">\n    <header id="brand"><span id="brand-time"></span><strong>STITCHELL GLASS</strong><small>SMART HOME CONTROL</small></header>
     <section id="pair" hidden>
       <h1>Pair to Home Assistant</h1>
       <div class="code" id="pair-code">------</div>
@@ -226,6 +248,13 @@
   <script>
   (() => {
     "use strict";
+
+    function updateBrandTime() {
+      const el = document.getElementById("brand-time");
+      if (el) el.textContent = new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    }
+    updateBrandTime();
+    setInterval(updateBrandTime, 30000);
 
     // ----- Constants ------------------------------------------------------
     const LS_TOKEN_KEY = "smartGlasses.token";
