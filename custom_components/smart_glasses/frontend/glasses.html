@@ -710,19 +710,20 @@
 
     function actionSymbol(item) {
       const label = (item.name || "").toLowerCase();
-      const command = (item.action || "").toLowerCase();
+      // Match the service name, not the media_player domain:
+      // "media_player" contains "play" and previously made every action ▶.
+      const service = (item.action || "").toLowerCase().split(".").pop();
+      if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
+      if (service === "volume_down" || /volume\s*(−|-|down|minus)|quieter/.test(label)) return "−";
+      if (service === "volume_mute" || /mute/.test(label)) return "♪";
+      if (service === "media_pause" || /\bpause\b/.test(label)) return "Ⅱ";
+      if (service === "media_play" || /\b(play|start|resume)\b/.test(label)) return "▶";
+      if (service === "media_stop" || /\b(stop|off)\b/.test(label)) return "■";
       if (/spooky|halloween|ghost/.test(label)) return "✦";
       if (/movie|cinema/.test(label)) return "▣";
-      if (/pause/.test(label + command)) return "Ⅱ";
-      if (/play|start|resume/.test(label + command)) return "▶";
-      if (/stop|off/.test(label + command)) return "■";
-      if (/volume.*(up|plus)|louder/.test(label + command)) return "+";
-      if (/volume.*(down|minus)|quieter/.test(label + command)) return "−";
-      if (/mute/.test(label + command)) return "♪";
       if (/party|dance|rainbow/.test(label)) return "✧";
       return "✦";
     }
-
     function renderGrid() {
       if (cards.length === 0 || !cards[currentCardIndex] || !cards[currentCardIndex].items || cards[currentCardIndex].items.length === 0) {
         renderTabs();
