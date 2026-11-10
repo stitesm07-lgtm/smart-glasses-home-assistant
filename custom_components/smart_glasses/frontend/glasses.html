@@ -694,7 +694,7 @@
       // one card to avoid showing "Office  Office  Office".
       const prev = !detailScreen && total > 1 ? cards[(idx - 1 + total) % total].name : null;
       const next = !detailScreen && total > 1 ? cards[(idx + 1) % total].name : null;
-      const dots = cards.map((_, i) =>
+      const dots = (detailScreen ? [] : cards).map((_, i) =>
         `<span class="dot${i === idx ? " active" : ""}"></span>`
       ).join("");
       $tabs.innerHTML = `
@@ -715,7 +715,7 @@
       }
       // Clamp focusedCellIndex so it stays valid as cards / items change.
       const card = cards[currentCardIndex];
-      const items = card.items;
+      const items = visibleItems();
       if (focusedCellIndex >= items.length) focusedCellIndex = items.length - 1;
       if (focusedCellIndex < 0) focusedCellIndex = 0;
 
@@ -975,7 +975,7 @@
       // (so navigating away or pressing Esc drops the "tap again to
       // confirm" state). Enter handles arm/fire on its own below.
       if (evt.key !== "Enter" && armed) clearArmed();
-      const cols = gridCols(items.length);
+      const cols = detailScreen ? 3 : (items.length === 4 ? 2 : gridCols(items.length));
       const row = Math.floor(focusedCellIndex / cols);
       const col = focusedCellIndex % cols;
 
