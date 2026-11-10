@@ -979,7 +979,7 @@
       const row = Math.floor(focusedCellIndex / cols);
       const col = focusedCellIndex % cols;
 
-      if (evt.key === "Escape") {
+      if (evt.key === "Escape") {\n        if (detailScreen) { openDetail("back"); evt.preventDefault(); return; }
         focusMode = "tabs";
         renderGrid();
         evt.preventDefault();
