@@ -335,7 +335,9 @@
       if (card.id === "living" || /living room/i.test(card.name)) return [
         find("light.living_room"),find("light.tv_lights"),NAV("TV Remote","remote"),find("light.fireplace_drawer")];
       if (card.id === "kitchen" || /kitchen/i.test(card.name)) return [
-        find("light.stitchell_kitchen_lights"),find("switch.island_lights_switch_1"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
+        find("switch.kitchen_switch_switch_1"),find("light.stitchell_kitchen_lights"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
+      if (card.id === "dining" || /dining room/i.test(card.name)) return [
+        find("switch.island_lights_switch_1"),find("light.stitchell_island_lights")];
       if (card.id === "master" || /master bedroom/i.test(card.name)) return [
         find("light.stitchell_master_bedroom_lights"),find("light.stitchell_master_closet_lights"),NAV("Bedroom TV","remote"),NAV("Lighting Scenes","scenes")];
       if (card.id === "outdoor" || /outdoor/i.test(card.name)) return [
