@@ -234,7 +234,8 @@
   </style>
 </head>
 <body>
-  <main id="app">\n    <header id="brand"><span id="brand-time"></span><strong>STITCHELL GLASS</strong><small>SMART HOME CONTROL</small></header>
+  <main id="app">
+    <header id="brand"><span id="brand-time"></span><strong>STITCHELL GLASS</strong><small>SMART HOME CONTROL</small></header>
     <section id="pair" hidden>
       <h1>Pair to Home Assistant</h1>
       <div class="code" id="pair-code">------</div>
@@ -721,7 +722,9 @@
 
       renderTabs();
 
-      $grid.dataset.count = String(items.length);\n      $grid.classList.toggle("stitchell-room", !detailScreen && items.length === 4);\n      $grid.classList.toggle("stitchell-detail", !!detailScreen);
+      $grid.dataset.count = String(items.length);
+      $grid.classList.toggle("stitchell-room", !detailScreen && items.length === 4);
+      $grid.classList.toggle("stitchell-detail", !!detailScreen);
       const armedIdx = (armed && armed.cardIdx === currentCardIndex) ? armed.cellIdx : -1;
       $grid.innerHTML = items.map((item, idx) => {
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
