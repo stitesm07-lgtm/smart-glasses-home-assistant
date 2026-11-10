@@ -783,7 +783,8 @@
       // Moving cards drops any in-flight arm. Wouldn't make sense to keep
       // it pointed at a cell the user can't see anymore.
       if (armed) clearArmed();
-      if (detailScreen) { detailScreen = null; }\n      currentCardIndex = (currentCardIndex + delta + cards.length) % cards.length;
+      if (detailScreen) { detailScreen = null; }
+      currentCardIndex = (currentCardIndex + delta + cards.length) % cards.length;
       focusedCellIndex = 0;
       renderGrid();
     }
@@ -829,7 +830,8 @@
       armed = null;
     }
 
-    function fireItem(item, cellIdx) {\n      if (item.type === "nav") { openDetail(item.page); return; }
+    function fireItem(item, cellIdx) {
+      if (item.type === "nav") { openDetail(item.page); return; }
       // Confirm gate: two taps within ARM_WINDOW_MS. The first tap arms
       // (and shows "TAP AGAIN TO CONFIRM" on the cell); the second tap
       // within the window actually fires. Anything else (navigating away,
@@ -982,7 +984,8 @@
       const row = Math.floor(focusedCellIndex / cols);
       const col = focusedCellIndex % cols;
 
-      if (evt.key === "Escape") {\n        if (detailScreen) { openDetail("back"); evt.preventDefault(); return; }
+      if (evt.key === "Escape") {
+        if (detailScreen) { openDetail("back"); evt.preventDefault(); return; }
         focusMode = "tabs";
         renderGrid();
         evt.preventDefault();
