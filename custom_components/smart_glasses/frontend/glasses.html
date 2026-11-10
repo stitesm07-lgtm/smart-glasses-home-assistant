@@ -53,6 +53,15 @@
     .cell[data-on="true"] .stitchell-toggle { background: #bd9137; border-color: #f4cd6b; }
     .cell[data-on="true"] .stitchell-toggle::after { left: 36px; background: #fff2c3; }
     .cell[data-stale="true"] .stitchell-toggle { opacity: .45; }
+    /* Compact four-tile room dashboard and hidden detail pages. */
+    #grid.stitchell-room { grid-template: repeat(2,minmax(0,1fr)) / repeat(2,minmax(0,1fr)) !important; padding: 14px 20px 24px; gap: 14px; }
+    #grid.stitchell-room .cell { justify-content: space-around; }
+    #grid.stitchell-room .cell .name { font-size: 20px; font-weight: 650; }
+    #grid.stitchell-room .cell[data-type="nav"] .value { font-size: 32px; color: #f5d37c; }
+    #grid.stitchell-detail { grid-template: repeat(3,minmax(0,1fr)) / repeat(3,minmax(0,1fr)) !important; padding: 12px 16px 24px; gap: 9px; }
+    #grid.stitchell-detail .cell .value { font-size: 25px !important; }
+    #grid.stitchell-detail .cell .name { font-size: 15px; }
+    #grid.stitchell-detail .cell[data-type="nav"] .value { color: #f5d37c; }
     #tabs .tab-name { color: #f5d37c; }
     .tab-dots .dot.active { background: #f5d37c; }
     #pair h1 { color: #f5d37c; }
@@ -299,6 +308,47 @@
     };
     let token = cleanLS(LS_TOKEN_KEY);
     let sessionId = cleanLS(LS_SESSION_KEY);
+    let detailScreen = null; // hidden panel, never added to room tabs
+    const NAV = (name, page) => ({type:"nav", name, page});
+    const ENTITY = (entity_id) => ({type:"entity",entity_id});
+    const ACTION = (name, action, target) => ({type:"action",name,action,target});
+    // Preserve backend-configured cards. Virtual tiles are only UI shortcuts.
+    function visibleItems() {
+      const card = cards[currentCardIndex];
+      if (!card) return [];
+      const configured = card.items || [];
+      const find = (id) => configured.find(x => x.entity_id === id) || ENTITY(id);
+      if (detailScreen === "remote") {
+        const tv = card.id === "master" ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
+        return [NAV("Back to Room","back"),find(tv),
+          ACTION("Play","media_player.media_play",tv),
+          ACTION("Pause","media_player.media_pause",tv),
+          ACTION("Volume +","media_player.volume_up",tv),
+          ACTION("Volume −","media_player.volume_down",tv),
+          ACTION("Mute","media_player.volume_mute",tv),
+          NAV("More Controls","remote-help")];
+      }
+      if (detailScreen === "remote-help") return [NAV("Back","remote"),NAV("Back to Room","back")];
+      if (detailScreen === "scenes") return [NAV("Back to Room","back"),...configured.filter(x=>x.type==="action" || x.entity_id?.startsWith("scene.") || x.entity_id?.startsWith("script.")).slice(0,7)];
+      if (detailScreen === "music") return [NAV("Back to Room","back"),...configured.filter(x=>x.entity_id?.startsWith("media_player.") || x.type==="action").slice(0,7)];
+      if (card.id === "living" || /living room/i.test(card.name)) return [
+        find("light.living_room"),find("light.tv_lights"),NAV("TV Remote","remote"),find("light.fireplace_drawer")];
+      if (card.id === "kitchen" || /kitchen/i.test(card.name)) return [
+        find("light.stitchell_kitchen_lights"),find("light.stitchell_island_lights"),NAV("Lighting Scenes","scenes"),NAV("Music","music")];
+      if (card.id === "master" || /master bedroom/i.test(card.name)) return [
+        find("light.stitchell_master_bedroom_lights"),find("light.stitchell_master_closet_lights"),NAV("Bedroom TV","remote"),NAV("Lighting Scenes","scenes")];
+      if (card.id === "outdoor" || /outdoor/i.test(card.name)) return [
+        find("light.stitchell_front_outdoor_lights"),find("light.stitchell_back_outdoor_lights"),NAV("Lighting Effects","scenes"),find("light.front_patio_1")];
+      if (/karson/i.test(card.name)) return [
+        ...configured.filter(x=>x.entity_id?.startsWith("light.")).slice(0,2),NAV("Lighting Effects","scenes"),NAV("Music","music")];
+      return configured;
+    }
+    function openDetail(page) {
+      detailScreen = page === "back" ? null : page;
+      focusedCellIndex = 0;
+      focusMode = "cells";
+      renderGrid();
+    }
     let cards = [];              // configured cards
     let currentCardIndex = 0;
     // Two-mode keyboard navigation:
@@ -638,12 +688,12 @@
       $tabs.dataset.focusMode = focusMode;
       const total = cards.length;
       const idx = currentCardIndex;
-      const name = cards[idx]?.name ?? "";
+      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
       // Wrap-around previews so the user sees what swipe-left and
       // swipe-right will yield. Skip them entirely when there's only
       // one card to avoid showing "Office  Office  Office".
-      const prev = total > 1 ? cards[(idx - 1 + total) % total].name : null;
-      const next = total > 1 ? cards[(idx + 1) % total].name : null;
+      const prev = !detailScreen && total > 1 ? cards[(idx - 1 + total) % total].name : null;
+      const next = !detailScreen && total > 1 ? cards[(idx + 1) % total].name : null;
       const dots = cards.map((_, i) =>
         `<span class="dot${i === idx ? " active" : ""}"></span>`
       ).join("");
@@ -671,7 +721,7 @@
 
       renderTabs();
 
-      $grid.dataset.count = String(items.length);
+      $grid.dataset.count = String(items.length);\n      $grid.classList.toggle("stitchell-room", !detailScreen && items.length === 4);\n      $grid.classList.toggle("stitchell-detail", !!detailScreen);
       const armedIdx = (armed && armed.cardIdx === currentCardIndex) ? armed.cellIdx : -1;
       $grid.innerHTML = items.map((item, idx) => {
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
@@ -730,14 +780,14 @@
       // Moving cards drops any in-flight arm. Wouldn't make sense to keep
       // it pointed at a cell the user can't see anymore.
       if (armed) clearArmed();
-      currentCardIndex = (currentCardIndex + delta + cards.length) % cards.length;
+      if (detailScreen) { detailScreen = null; }\n      currentCardIndex = (currentCardIndex + delta + cards.length) % cards.length;
       focusedCellIndex = 0;
       renderGrid();
     }
 
     function triggerFocusedCell() {
       if (focusMode !== "cells" || cards.length === 0) return;
-      const items = cards[currentCardIndex]?.items ?? [];
+      const items = visibleItems();
       const item = items[focusedCellIndex];
       if (!item) return;
       fireItem(item, focusedCellIndex);
@@ -776,7 +826,7 @@
       armed = null;
     }
 
-    function fireItem(item, cellIdx) {
+    function fireItem(item, cellIdx) {\n      if (item.type === "nav") { openDetail(item.page); return; }
       // Confirm gate: two taps within ARM_WINDOW_MS. The first tap arms
       // (and shows "TAP AGAIN TO CONFIRM" on the cell); the second tap
       // within the window actually fires. Anything else (navigating away,
@@ -836,7 +886,7 @@
       const cell = evt.target.closest(".cell");
       if (!cell || cards.length === 0) return;
       const idx = Number(cell.dataset.idx);
-      const item = cards[currentCardIndex]?.items?.[idx];
+      const item = visibleItems()[idx];
       if (!item) return;
       // Move focus to the tapped cell, then fire it. fireItem handles the
       // confirm gate — tapping a "confirm: true" cell once arms it, a
