@@ -60,7 +60,8 @@
     #grid.stitchell-room .cell[data-type="nav"] .value { font-size: 32px; color: #f5d37c; }
     #grid.stitchell-detail { grid-template: repeat(3,minmax(0,1fr)) / repeat(3,minmax(0,1fr)) !important; padding: 12px 16px 24px; gap: 9px; }
     /* Detail pages may contain more than nine controls; keep them accessible. */
-    #grid.stitchell-detail { grid-template-rows: none !important; grid-auto-rows: minmax(88px, auto); overflow-y: auto; align-content: start; }
+    #grid.stitchell-detail { grid-template: none / repeat(3,minmax(0,1fr)) !important; grid-auto-rows: minmax(88px, auto); overflow-y: auto; align-content: start; }
+    #grid.stitchell-detail .cell { min-height: 88px; }
     #grid.stitchell-detail .cell .value { font-size: 25px !important; }
     #grid.stitchell-detail .cell .name { font-size: 15px; }
     #grid.stitchell-detail .cell[data-type="nav"] .value { color: #f5d37c; }
