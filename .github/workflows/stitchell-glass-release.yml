@@ -1,0 +1,60 @@
+name: Release Stitchell Glass
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'custom_components/smart_glasses/manifest.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: stitchell-glass-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Read and validate version
+        id: version
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, re
+          from pathlib import Path
+          manifest = json.loads(Path('custom_components/smart_glasses/manifest.json').read_text())
+          version = manifest['version']
+          assert re.fullmatch(r'\d+\.\d+\.\d+', version), 'Expected numeric semantic version'
+          print(f'tag=v{version}')
+          PY
+      - name: Validate integration
+        run: |
+          python -m compileall -q custom_components/smart_glasses
+          python -m json.tool custom_components/smart_glasses/manifest.json > /dev/null
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('custom_components/smart_glasses/frontend/glasses.html').read_text()
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, re.S | re.I)
+          assert scripts, 'No inline script found'
+          for index, script in enumerate(scripts):
+              Path(f'/tmp/stitchell-glass-{index}.js').write_text(script)
+          PY
+          for file in /tmp/stitchell-glass-*.js; do node --check "$file"; done
+      - name: Publish release if version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; no changes made."
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists without a release. Resolve manually to avoid publishing mismatched code."
+            exit 1
+          fi
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "Stitchell Glass $TAG" --generate-notes --latest
