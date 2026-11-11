@@ -1,0 +1,35 @@
+name: Validate Stitchell Glass
+on:
+  push:
+    paths:
+      - 'custom_components/smart_glasses/**'
+      - '.github/workflows/stitchell-glass-check.yml'
+  pull_request:
+  workflow_dispatch:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile Python integration
+        run: python -m compileall -q custom_components/smart_glasses
+      - name: Validate manifest JSON
+        run: python -m json.tool custom_components/smart_glasses/manifest.json > /dev/null
+      - name: Check embedded glasses JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('custom_components/smart_glasses/frontend/glasses.html').read_text()
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, re.S | re.I)
+          assert scripts, 'No inline script found'
+          for index, script in enumerate(scripts):
+              Path(f'/tmp/stitchell-glass-{index}.js').write_text(script)
+          PY
+          for file in /tmp/stitchell-glass-*.js; do node --check "$file"; done
