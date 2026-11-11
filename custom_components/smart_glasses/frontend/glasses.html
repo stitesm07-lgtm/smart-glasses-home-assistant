@@ -312,7 +312,7 @@
     let detailScreen = null; // hidden panel, never added to room tabs
     const NAV = (name, page) => ({type:"nav", name, page});
     const ENTITY = (entity_id) => ({type:"entity",entity_id});
-    const ACTION = (name, action, target) => ({type:"action",name,action,target});
+    const ACTION = (name, action, target, data = null) => ({type:"action",name,action,target,data});
     // Preserve backend-configured cards. Virtual tiles are only UI shortcuts.
     function visibleItems() {
       const card = cards[currentCardIndex];
@@ -322,13 +322,11 @@
       const isRoom = (id, pattern) => card.id === id || pattern.test(card.name || "");
       if (detailScreen === "remote") {
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
-        return [NAV("Back to Room","back"), find(tv),
-          ACTION("Power","media_player.toggle",tv),
-          ACTION("Volume +","media_player.volume_up",tv),
-          ACTION("Volume −","media_player.volume_down",tv),
-          ACTION("Play","media_player.media_play",tv),
-          ACTION("Pause","media_player.media_pause",tv),
-          ACTION("Mute","media_player.volume_mute",tv)];
+        return [
+          NAV("Back","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
+          ACTION("Up","webostv.button",tv,{button:"UP"}), ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
+          ACTION("Down","webostv.button",tv,{button:"DOWN"}), ACTION("Vol +","media_player.volume_up",tv), ACTION("Vol −","media_player.volume_down",tv), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
+        ];
       }
       if (detailScreen === "scenes") {
         const room = (card.name || "").toLowerCase();
@@ -511,9 +509,10 @@
       return m;
     }
 
-    async function callService(domain, service, targetEid) {
+    async async function callService(domain, service, targetEid, data = null) {
       const body = { domain, service };
       if (targetEid) body.target = { entity_id: targetEid };
+      if (data) body.data = data;
       const res = await fetch("/api/smart_glasses/glance/call_service", {
         method: "POST",
         headers: {
@@ -727,6 +726,7 @@
       // Match the service name, not the media_player domain:
       // "media_player" contains "play" and previously made every action ▶.
       const service = (item.action || "").toLowerCase().split(".").pop();
+      if (service === "button") return ({UP:"▲",DOWN:"▼",LEFT:"◀",RIGHT:"▶",ENTER:"OK",BACK:"↩",HOME:"⌂"})[item.data?.button] || "•";
       if (service === "toggle" && /power/i.test(label)) return "⏻";
       if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
       if (service === "volume_down" || /volume\s*(−|-|down|minus)|quieter/.test(label)) return "−";
@@ -754,8 +754,10 @@
       renderTabs();
 
       $grid.dataset.count = String(items.length);
+      $grid.style.gridTemplateColumns = detailScreen === "remote" ? "repeat(3, minmax(0, 1fr))" : "";
       $grid.classList.toggle("stitchell-room", !detailScreen && items.length === 4);
       $grid.classList.toggle("stitchell-detail", !!detailScreen);
+      $grid.classList.toggle("stitchell-remote", detailScreen === "remote");
       const armedIdx = (armed && armed.cardIdx === currentCardIndex) ? armed.cellIdx : -1;
       $grid.innerHTML = items.map((item, idx) => {
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
@@ -809,7 +811,7 @@
       if (n <= 2) return 2;
       if (n <= 4) return 2;
       if (n <= 6) return 3;
-      return 4; // 7-8
+      return 3; // Remote controls stay in three deliberate columns
     }
 
     // Common helpers for nav.
@@ -890,7 +892,7 @@
       if (item.type === "action") {
         const parts = item.action.split(".");
         if (parts.length !== 2) return;
-        callService(parts[0], parts[1], item.target ?? null);
+        callService(parts[0], parts[1], item.target ?? null, item.data);
       } else if (item.entity_id) {
         const [d, s] = defaultServiceFor(item.entity_id);
         callService(d, s, item.entity_id);
