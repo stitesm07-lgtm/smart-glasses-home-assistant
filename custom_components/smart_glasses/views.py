@@ -810,13 +810,34 @@ def _lookup_glasses_token(hass: HomeAssistant, token: Any) -> dict[str, Any] | N
     return _store(hass).find_pairing_by_token(token)
 
 
+# Room shortcuts displayed by the Stitchell glasses UI. Only these exact
+# entity IDs are added, and only when the matching room card is configured.
+_ROOM_SHORTCUT_ENTITIES = {
+    "living": {"switch.living_room_switch_switch_1"},
+    "kitchen": {"switch.kitchen_switch_switch_1"},
+    "dining": {"switch.island_lights_switch_1"},
+    "outdoor": {"switch.tp_link_smart_plug_9ce3_patio_lights"},
+}
+
+
+def _room_shortcut_ids(cards: list[dict[str, Any]]) -> set[str]:
+    out: set[str] = set()
+    for card in cards:
+        name = str(card.get("name", "")).lower()
+        card_id = str(card.get("id", "")).lower()
+        for room, entities in _ROOM_SHORTCUT_ENTITIES.items():
+            if card_id == room or (room == "living" and "living room" in name) or (room == "dining" and "dining room" in name) or (room in ("kitchen", "outdoor") and room in name):
+                out.update(entities)
+    return out
+
+
 def _card_entity_ids(cards: list[dict[str, Any]]) -> set[str]:
     out: set[str] = set()
     for c in cards:
         for item in c.get("items", []):
             if item.get("type") == "entity" and isinstance(item.get("entity_id"), str):
                 out.add(item["entity_id"])
-    return out
+    return out | _room_shortcut_ids(cards)
 
 
 def _augment_with_group_meta(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
@@ -941,6 +962,10 @@ def _service_call_allowed(
     if _service_blocked(domain, service):
         return False
     service_str = f"{domain}.{service}"
+    # Room-specific physical switches shown as UI shortcuts are permitted to
+    # toggle, but no arbitrary service or entity is exposed to glasses tokens.
+    if (service_str == "homeassistant.toggle" and target_eid in _room_shortcut_ids(cards)):
+        return True
     for card in cards:
         for item in card.get("items", []):
             t = item.get("type")
