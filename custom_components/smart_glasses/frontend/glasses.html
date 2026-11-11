@@ -336,7 +336,7 @@
       if (detailScreen === "cameras") return [NAV("Back to Room","back"), NAV("Front Door","camera-front"), NAV("Living Room","camera-living")];
       if (detailScreen === "camera-front" || detailScreen === "camera-living") return [NAV("Cameras","cameras"), NAV("Refresh","camera-refresh")];
       if (detailScreen === "remote") {
-        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
         return [
           NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
           ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
@@ -347,7 +347,7 @@
         ];
       }
       if (detailScreen === "streaming") {
-        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
         return [NAV("Remote","remote"), ACTION("Netflix","media_player.select_source",tv,{source:"Netflix"}), ACTION("Disney+","media_player.select_source",tv,{source:"Disney+"}), ACTION("Prime Video","media_player.select_source",tv,{source:"Prime Video"}),
           ACTION("Hulu","media_player.select_source",tv,{source:"Hulu"}), ACTION("Paramount+","media_player.select_source",tv,{source:"Paramount+"})
         ];
