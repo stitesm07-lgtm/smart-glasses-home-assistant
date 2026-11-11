@@ -940,6 +940,15 @@ def _glance_state_payloads_for_change(
     return payloads
 
 
+# Fixed LG commands mirrored from Stitchell Home's working webOS dashboard.
+_GLASS_TVS = frozenset({
+    "media_player.lg_webos_tv_oled65c1pub_2",
+    "media_player.lg_webos_tv_55qned80uqa",
+})
+_GLASS_REMOTE_BUTTONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "HOME"})
+_GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "media_play", "media_pause"})
+
+
 def _service_call_allowed(
     cards: list[dict[str, Any]], domain: str, service: str, target_eid: str | None
 ) -> bool:
@@ -961,6 +970,10 @@ def _service_call_allowed(
     # leaked token + a one-time misconfig shouldn't be able to reboot HA.
     if _service_blocked(domain, service):
         return False
+    # TV commands are limited to the two explicitly configured LG televisions.
+    # The command payload itself is validated separately below.
+    if target_eid in _GLASS_TVS and ((domain == "webostv" and service == "button") or (domain == "media_player" and service in _GLASS_TV_SERVICES)):
+        return True
     service_str = f"{domain}.{service}"
     # Room-specific physical switches shown as UI shortcuts are permitted to
     # toggle, but no arbitrary service or entity is exposed to glasses tokens.
@@ -1073,9 +1086,11 @@ class GlanceCallServiceView(HomeAssistantView):
         service = body.get("service")
         if not isinstance(domain, str) or not isinstance(service, str):
             return self.json_message("domain and service must be strings", status_code=400)
-        # Ignore any caller-supplied service data. The glasses proxy only
-        # forwards domain/service/target — never brightness, code, etc. —
-        # so a leaked token cannot smuggle privileged kwargs.
+        # Only permit a single fixed button field for webOS navigation.
+        # All other calls ignore caller-supplied data.
+        raw_data = body.get("data") or {}
+        if not isinstance(raw_data, dict):
+            return self.json_message("invalid service data", status_code=400)
         target = body.get("target") or {}
         if target is not None and not isinstance(target, dict):
             return self.json_message("target must be an object", status_code=400)
@@ -1083,6 +1098,13 @@ class GlanceCallServiceView(HomeAssistantView):
         if target_eid is not None and not isinstance(target_eid, str):
             return self.json_message("target.entity_id must be a string", status_code=400)
 
+        service_data = {}
+        if domain == "webostv" and service == "button":
+            button = raw_data.get("button")
+            if (target_eid not in _GLASS_TVS or button not in _GLASS_REMOTE_BUTTONS
+                    or set(raw_data) != {"button"}):
+                return self.json_message("invalid TV button", status_code=403)
+            service_data = {"button": button}
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
             return self.json_message("service call not permitted by card config", status_code=403)
         try:
@@ -1090,6 +1112,7 @@ class GlanceCallServiceView(HomeAssistantView):
                 domain=domain,
                 service=service,
                 target={"entity_id": target_eid} if target_eid else {},
+                service_data=service_data,
                 blocking=False,
             )
         except Exception:  # noqa: BLE001
