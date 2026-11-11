@@ -949,6 +949,19 @@ _GLASS_TVS = frozenset({
     "media_player.lg_webos_tv_55qned80uqa",
 })
 _GLASS_REMOTE_BUTTONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "HOME"})
+_GLASS_SCENE_ACTIONS = {
+    ("script", "turn_on", "script.stitchell_spooky_loop"),
+    ("script", "turn_on", "script.stitchell_spooky_stop"),
+    ("automation", "trigger", "automation.stitchell_movie_mode_paused"),
+    ("automation", "trigger", "automation.stitchell_movie_mode_off"),
+}
+_GLASS_MUSIC_PLAYERS = frozenset({
+    "media_player.spotify_matt", "media_player.kitchen_display",
+    "media_player.whole_house", "media_player.master_bedroom_speaker_2",
+    "media_player.kiras_room_speaker_2", "media_player.karsons_room_speaker_2",
+    "media_player.kids_bedroom_2",
+})
+_GLASS_MUSIC_SERVICES = frozenset({"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "volume_up", "volume_down"})
 _GLASS_TV_SOURCES = frozenset({"Netflix", "Disney+", "Prime Video", "Hulu", "Paramount+"})
 _GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
 
@@ -976,6 +989,10 @@ def _service_call_allowed(
         return False
     # TV commands are limited to the two explicitly configured LG televisions.
     # The command payload itself is validated separately below.
+    if (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
+        return True
+    if target_eid in _GLASS_MUSIC_PLAYERS and domain == "media_player" and service in _GLASS_MUSIC_SERVICES:
+        return True
     if target_eid in _GLASS_TVS and ((domain == "webostv" and service == "button") or (domain == "media_player" and service in _GLASS_TV_SERVICES)):
         return True
     service_str = f"{domain}.{service}"
@@ -1115,6 +1132,10 @@ class GlanceCallServiceView(HomeAssistantView):
                     or source not in _GLASS_TV_SOURCES or set(raw_data) != {"source"}):
                 return self.json_message("invalid TV source", status_code=403)
             service_data = {"source": source}
+        elif domain == "automation" and service == "trigger" and (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
+            if raw_data and raw_data != {"skip_condition": False}:
+                return self.json_message("invalid automation options", status_code=403)
+            service_data = {"skip_condition": False}
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
             return self.json_message("service call not permitted by card config", status_code=403)
         try:
