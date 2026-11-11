@@ -338,7 +338,7 @@
       if (detailScreen === "remote") {
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
         return [
-          NAV("Rooms","back"), ACTION("Power","media_player.turn_on",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
+          NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
           ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
           ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
           {type:"spacer"}, ACTION("Down","webostv.button",tv,{button:"DOWN"}), {type:"spacer"},
@@ -981,7 +981,11 @@
         }
         const parts = item.action.split(".");
         if (parts.length !== 2) return;
-        callService(parts[0], parts[1], item.target ?? null, item.data);
+        if (item.name === "Power" && item.target && item.action === "media_player.toggle") {
+          const state = states.get(item.target)?.state;
+          const command = state === "on" || state === "playing" || state === "paused" || state === "idle" ? "turn_off" : "turn_on";
+          callService("media_player", command, item.target);
+        } else callService(parts[0], parts[1], item.target ?? null, item.data);
       } else if (item.entity_id) {
         // Speaker and Spotify tiles are state indicators; explicit buttons control playback.
         if (item.entity_id.startsWith("media_player.")) return;
