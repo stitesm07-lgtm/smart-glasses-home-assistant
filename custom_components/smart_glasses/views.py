@@ -1008,7 +1008,7 @@ _GLASS_MUSIC_PLAYERS = frozenset({
 })
 _GLASS_MUSIC_SERVICES = frozenset({"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "volume_up", "volume_down", "select_source"})
 _GLASS_TV_SOURCES = frozenset({"Netflix", "Disney+", "Prime Video", "Hulu", "Paramount+"})
-_GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
+_GLASS_TV_SERVICES = frozenset({"toggle", "turn_on", "turn_off", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
 
 
 def _service_call_allowed(
