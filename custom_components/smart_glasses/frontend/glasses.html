@@ -825,6 +825,8 @@
         }
       }).join("");
       showPanel("grid");
+      const focusedTile = $grid.querySelector(".cell.focused");
+      if (focusedTile && detailScreen) focusedTile.scrollIntoView({block:"nearest", inline:"nearest"});
     }
 
     // How many columns the grid CSS lays out for a given item count. Keep
