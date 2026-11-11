@@ -334,6 +334,10 @@
       }
       if (detailScreen === "scenes") {
         const sceneActions = [
+          ACTION("Normal White","light.turn_on","light.stitchell_indoor_preset",{preset:"normal"}),
+          ACTION("Bright White","light.turn_on","light.stitchell_indoor_preset",{preset:"bright"}),
+          ACTION("Warm White","light.turn_on","light.stitchell_indoor_preset",{preset:"warm"}),
+          ACTION("Party","light.turn_on","light.stitchell_indoor_preset",{preset:"party"}),
           ACTION("Spooky","script.turn_on","script.stitchell_spooky_loop"),
           ACTION("Stop Spooky","script.turn_on","script.stitchell_spooky_stop"),
           ACTION("Movie Mode","automation.trigger","automation.stitchell_movie_mode_paused",{skip_condition:false}),
