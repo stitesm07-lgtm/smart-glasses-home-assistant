@@ -359,6 +359,23 @@ class GlassesAppView(HomeAssistantView):
         )
 
 
+class StitchellIconView(HomeAssistantView):
+    """Public app icon; contains no private information."""
+
+    url = "/smart_glasses_static/stitchell-glass-icon.svg"
+    name = f"{DOMAIN}:stitchell_icon"
+    requires_auth = False
+
+    async def get(self, request: web.Request) -> web.Response:
+        from pathlib import Path
+        icon = Path(__file__).parent / "frontend" / "stitchell-glass-icon.svg"
+        return web.Response(
+            text=icon.read_text(encoding="utf-8"),
+            content_type="image/svg+xml",
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
+
+
 class FaviconView(HomeAssistantView):
     """Serve the integration's 192x192 favicon for the glasses Web App.
     Long-cached because the file rarely changes; version bumps would
@@ -1355,6 +1372,7 @@ class AuditView(HomeAssistantView):
 ALL_VIEWS: list[type[HomeAssistantView]] = [
     GlassesAppView,
     FaviconView,
+    StitchellIconView,
     PanelJsView,
     PairStartView,
     PairTokenView,
