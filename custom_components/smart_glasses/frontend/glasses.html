@@ -1019,7 +1019,7 @@
         if (evt.key === "ArrowLeft")       { switchCard(-1); evt.preventDefault(); }
         else if (evt.key === "ArrowRight") { switchCard( 1); evt.preventDefault(); }
         else if (evt.key === "ArrowDown" || evt.key === "Enter") {
-          const items = cards[currentCardIndex]?.items ?? [];
+          const items = visibleItems();
           if (items.length > 0) {
             focusMode = "cells";
             focusedCellIndex = 0;
@@ -1031,7 +1031,7 @@
       }
 
       // cells mode
-      const items = cards[currentCardIndex]?.items ?? [];
+      const items = visibleItems();
       if (items.length === 0) {
         focusMode = "tabs";
         renderGrid();
@@ -1113,7 +1113,7 @@
       } else if (dy > 0) {
         // Swipe down — enter cells mode if at tabs.
         if (focusMode === "tabs") {
-          const items = cards[currentCardIndex]?.items ?? [];
+          const items = visibleItems();
           if (items.length > 0) {
             focusMode = "cells";
             focusedCellIndex = 0;
