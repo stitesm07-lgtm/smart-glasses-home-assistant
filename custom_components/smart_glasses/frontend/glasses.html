@@ -548,6 +548,7 @@
         });
         if (res.status === 401) { tokenInvalid(); return; }
         if (res.status === 403) { setStatus("Action not allowed"); return; }
+        if (res.status === 409) { setStatus("Device unavailable or incompatible"); return; }
         if (res.status === 429) { setStatus("Too many commands — wait a moment"); return; }
         if (!res.ok) { setStatus(`Command failed (${res.status})`); return; }
         setStatus("Command sent");
@@ -921,6 +922,11 @@
         clearArmed();
       }
       if (item.type === "action") {
+        const live = item.target && states.get(item.target);
+        if (live && ["unavailable", "unknown"].includes(live.state) && item.action !== "media_player.toggle") {
+          setStatus("Device unavailable — command not sent");
+          return;
+        }
         const parts = item.action.split(".");
         if (parts.length !== 2) return;
         callService(parts[0], parts[1], item.target ?? null, item.data);
