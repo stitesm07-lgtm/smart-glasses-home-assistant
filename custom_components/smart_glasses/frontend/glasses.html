@@ -331,20 +331,29 @@
         ];
       }
       if (detailScreen === "scenes") {
-        // Reuse only configured Home Assistant scene/script actions; never invent calls.
-        const selected = cards.flatMap(c => c.items || []).filter(x =>
-          (x.type === "action" && /^(script|scene)\./.test(x.action || "")) ||
-          (x.type === "entity" && /^(scene|script)\./.test(x.entity_id || "")));
-        const unique = [...new Map(selected.map(x => [x.action + ":" + (x.target || x.entity_id), x])).values()];
-        return [NAV("Back to Room","back"), ...unique.slice(0,12)];
+        const sceneActions = [
+          ACTION("Spooky","script.turn_on","script.stitchell_spooky_loop"),
+          ACTION("Stop Spooky","script.turn_on","script.stitchell_spooky_stop"),
+          ACTION("Movie Mode","automation.trigger","automation.stitchell_movie_mode_paused",{skip_condition:false}),
+          ACTION("Movie Mode Off","automation.trigger","automation.stitchell_movie_mode_off",{skip_condition:false})
+        ];
+        return [NAV("Back to Room","back"), ...sceneActions];
       }
-      const hasScenes = cards.some(c => (c.items || []).some(x =>
-        (x.type === "action" && /^(script|scene)\./.test(x.action || "")) ||
-        (x.type === "entity" && /^(script|scene)\./.test(x.entity_id || ""))));
-      const sceneTile = hasScenes ? [NAV("Scenes","scenes")] : [];
+      if (detailScreen === "music") {
+        const player = "media_player.spotify_matt";
+        return [NAV("Back to Room","back"), find(player),
+          ACTION("Play / Pause","media_player.media_play_pause",player),
+          ACTION("Next Track","media_player.media_next_track",player),
+          ACTION("Previous Track","media_player.media_previous_track",player),
+          ACTION("Volume +","media_player.volume_up",player),
+          ACTION("Volume −","media_player.volume_down",player),
+          find("media_player.kitchen_display"), find("media_player.whole_house"),
+          find("media_player.master_bedroom_speaker_2")];
+      }
+      const sceneTile = [NAV("Scenes","scenes")];
       if (isRoom("living", /living room/i)) return [
         find("switch.living_room_switch_switch_1"), find("light.living_room"),
-        NAV("TV Remote","remote"), ...sceneTile,
+        NAV("TV Remote","remote"), NAV("Music","music"), ...sceneTile,
         find("light.tv_lights"), find("light.fireplace_drawer")];
       if (isRoom("kitchen", /kitchen/i)) return [
         find("switch.kitchen_switch_switch_1"), find("light.stitchell_kitchen_lights"), ...sceneTile];
@@ -352,7 +361,7 @@
         find("switch.island_lights_switch_1"), find("light.stitchell_island_lights"), ...sceneTile];
       if (isRoom("master", /master bedroom/i)) return [
         find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
-        NAV("TV Remote","remote"), ...sceneTile];
+        NAV("TV Remote","remote"), NAV("Music","music"), ...sceneTile];
       if (detailScreen === "patio") return [NAV("Back to Room","back"),
         find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (isRoom("outdoor", /outdoor/i)) return [
@@ -733,6 +742,8 @@
       // "media_player" contains "play" and previously made every action ▶.
       const service = (item.action || "").toLowerCase().split(".").pop();
       if (service === "select_source") return "▶";
+      if (service === "media_next_track") return "⏭";
+      if (service === "media_previous_track") return "⏮";
       if (service === "button" && item.action === "webostv.button") return ({UP:"▲",DOWN:"▼",LEFT:"◀",RIGHT:"▶",ENTER:"OK",BACK:"↩",HOME:"⌂"})[item.data?.button] || "•";
       if (service === "toggle" && /power/i.test(label)) return "⏻";
       if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
@@ -770,7 +781,7 @@
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
         const armedCls = (idx === armedIdx) ? " armed" : "";
         if (item.type === "nav") {
-          const symbol = item.page === "back" ? "←" : item.page === "remote" ? "▣" : item.page === "patio" ? "☼" : "✦";
+          const symbol = item.page === "back" ? "←" : item.page === "remote" ? "▣" : item.page === "patio" ? "☼" : item.page === "music" ? "♫" : "✦";
           return `<div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="nav" data-on="unset" data-stale="false"><div class="value">${symbol}</div><div class="name">${esc(item.name)}</div></div>`;
         }
         if (item.type === "action") {
