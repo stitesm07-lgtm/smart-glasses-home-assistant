@@ -349,9 +349,11 @@
           ACTION("Normal White","light.turn_on","light.stitchell_indoor_preset",{preset:"normal"}),
           ACTION("Bright White","light.turn_on","light.stitchell_indoor_preset",{preset:"bright"}),
           ACTION("Warm White","light.turn_on","light.stitchell_indoor_preset",{preset:"warm"}),
-          ACTION("Party","light.turn_on","light.stitchell_indoor_preset",{preset:"party"}),
-          ACTION("Spooky","script.turn_on","script.stitchell_spooky_loop"),
-          ACTION("Stop Spooky","script.turn_on","script.stitchell_spooky_stop"),
+          ...(isRoom("master", /master bedroom/i) ? [
+            ACTION("Bright","light.turn_on","light.stitchell_indoor_preset",{preset:"master_bright"}),
+            ACTION("Relax","light.turn_on","light.stitchell_indoor_preset",{preset:"master_relax"}),
+            ACTION("Night","light.turn_on","light.stitchell_indoor_preset",{preset:"master_night"})
+          ] : []),
           ACTION("Movie Mode","automation.trigger","automation.stitchell_movie_mode_paused",{skip_condition:false}),
           ACTION("Movie Mode Off","automation.trigger","automation.stitchell_movie_mode_off",{skip_condition:false})
         ];
