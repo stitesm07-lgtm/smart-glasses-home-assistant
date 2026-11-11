@@ -325,7 +325,9 @@
         return [
           NAV("Back","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
           ACTION("Up","webostv.button",tv,{button:"UP"}), ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
-          ACTION("Down","webostv.button",tv,{button:"DOWN"}), ACTION("Vol +","media_player.volume_up",tv), ACTION("Vol −","media_player.volume_down",tv), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
+          ACTION("Down","webostv.button",tv,{button:"DOWN"}), ACTION("Vol +","media_player.volume_up",tv), ACTION("Vol −","media_player.volume_down",tv), ACTION("Mute","media_player.volume_mute",tv),
+          ACTION("Netflix","media_player.select_source",tv,{source:"Netflix"}), ACTION("Disney+","media_player.select_source",tv,{source:"Disney+"}), ACTION("Prime Video","media_player.select_source",tv,{source:"Prime Video"}),
+          ACTION("Hulu","media_player.select_source",tv,{source:"Hulu"}), ACTION("Paramount+","media_player.select_source",tv,{source:"Paramount+"}), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
         ];
       }
       if (detailScreen === "scenes") {
@@ -730,6 +732,7 @@
       // Match the service name, not the media_player domain:
       // "media_player" contains "play" and previously made every action ▶.
       const service = (item.action || "").toLowerCase().split(".").pop();
+      if (service === "select_source") return "▶";
       if (service === "button" && item.action === "webostv.button") return ({UP:"▲",DOWN:"▼",LEFT:"◀",RIGHT:"▶",ENTER:"OK",BACK:"↩",HOME:"⌂"})[item.data?.button] || "•";
       if (service === "toggle" && /power/i.test(label)) return "⏻";
       if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
