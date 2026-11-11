@@ -1167,11 +1167,24 @@ class GlanceCallServiceView(HomeAssistantView):
             return self.json_message("unsupported service data", status_code=403)
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
             return self.json_message("service call not permitted by card config", status_code=403)
+        # Never send a multi-light preset to disconnected lights; on many HA
+        # integrations one unavailable target can fail the entire call.
+        if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
+            preset_lights = [eid for eid in _GLASS_INDOOR_LIGHTS
+                             if (state := hass.states.get(eid)) is not None
+                             and state.state not in ("unavailable", "unknown")
+                             and (not service_data.get("effect") or
+                                  service_data["effect"] in (state.attributes.get("effect_list") or []))]
+            if not preset_lights:
+                return self.json_message("no compatible indoor lights available", status_code=409)
+            service_target = {"entity_id": preset_lights}
+        else:
+            service_target = {"entity_id": target_eid} if target_eid else {}
         try:
             await hass.services.async_call(
                 domain=domain,
                 service=service,
-                target={"entity_id": list(_GLASS_INDOOR_LIGHTS)} if (domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset") else ({"entity_id": target_eid} if target_eid else {}),
+                target=service_target,
                 service_data=service_data,
                 blocking=False,
             )
