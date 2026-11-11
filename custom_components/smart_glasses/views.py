@@ -976,7 +976,7 @@ _GLASS_MUSIC_PLAYERS = frozenset({
     "media_player.kiras_room_speaker_2", "media_player.karsons_room_speaker_2",
     "media_player.kids_bedroom_2",
 })
-_GLASS_MUSIC_SERVICES = frozenset({"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "volume_up", "volume_down"})
+_GLASS_MUSIC_SERVICES = frozenset({"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "volume_up", "volume_down", "select_source"})
 _GLASS_TV_SOURCES = frozenset({"Netflix", "Disney+", "Prime Video", "Hulu", "Paramount+"})
 _GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
 
@@ -1150,6 +1150,25 @@ class GlanceCallServiceView(HomeAssistantView):
             if current is None or current.state in ("unavailable", "unknown"):
                 return self.json_message("TV unavailable", status_code=409)
             service_data = {"is_volume_muted": not bool(current.attributes.get("is_volume_muted", False))}
+        elif domain == "media_player" and service == "select_source" and target_eid == "media_player.spotify_matt":
+            destination = raw_data.get("destination")
+            choices = {
+                "kitchen": ("kitchen display", "kitchen"),
+                "whole_house": ("whole house", "whole_house"),
+                "master_bedroom": ("master bedroom speaker", "master bedroom"),
+            }
+            if destination not in choices or set(raw_data) != {"destination"}:
+                return self.json_message("invalid Spotify destination", status_code=403)
+            spotify_state = hass.states.get(target_eid)
+            available = spotify_state.attributes.get("source_list", []) if spotify_state else []
+            if not isinstance(available, list):
+                available = []
+            wanted = choices[destination]
+            matching = next((source for source in available
+                             if isinstance(source, str) and source.casefold().strip() in wanted), None)
+            if matching is None:
+                return self.json_message("Spotify destination not available in source list", status_code=409)
+            service_data = {"source": matching}
         elif domain == "media_player" and service == "select_source":
             source = raw_data.get("source")
             if (target_eid not in _GLASS_TVS or not isinstance(source, str)
