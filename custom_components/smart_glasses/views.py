@@ -1111,7 +1111,7 @@ class GlanceStatesView(HomeAssistantView):
 class GlanceCameraSnapshotView(HomeAssistantView):
     """Paired-glasses-only snapshots of two explicitly allowed cameras."""
 
-    url = f"{API_PREFIX}/glance/camera/{camera_name}"
+    url = f"{API_PREFIX}/glance/camera/{{camera_name}}"
     name = f"{DOMAIN}:glance_camera_snapshot"
     requires_auth = False
 
