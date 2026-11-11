@@ -964,7 +964,7 @@ def _glance_state_payloads_for_change(
 
 # Fixed LG commands mirrored from Stitchell Home's working webOS dashboard.
 _GLASS_TVS = frozenset({
-    "media_player.lg_webos_tv_oled65c1pub",
+    "media_player.lg_webos_tv_oled65c1pub_2",
     "media_player.lg_webos_tv_55qned80uqa",
 })
 _GLASS_REMOTE_BUTTONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "HOME"})
