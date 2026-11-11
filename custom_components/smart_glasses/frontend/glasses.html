@@ -984,7 +984,9 @@
         if (item.name === "Power" && item.target && item.action === "media_player.toggle") {
           const state = states.get(item.target)?.state;
           const command = state === "on" || state === "playing" || state === "paused" || state === "idle" ? "turn_off" : "turn_on";
-          callService("media_player", command, item.target);
+          if (command === "turn_on" && item.target === "media_player.lg_webos_tv_oled65c1pub_2") {
+            callService("wake_on_lan", "send_magic_packet", item.target);
+          } else callService("media_player", command, item.target);
         } else callService(parts[0], parts[1], item.target ?? null, item.data);
       } else if (item.entity_id) {
         // Speaker and Spotify tiles are state indicators; explicit buttons control playback.
