@@ -949,7 +949,8 @@ _GLASS_TVS = frozenset({
     "media_player.lg_webos_tv_55qned80uqa",
 })
 _GLASS_REMOTE_BUTTONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "HOME"})
-_GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "media_play", "media_pause"})
+_GLASS_TV_SOURCES = frozenset({"Netflix", "Disney+", "Prime Video", "Hulu", "Paramount+"})
+_GLASS_TV_SERVICES = frozenset({"toggle", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
 
 
 def _service_call_allowed(
@@ -1108,6 +1109,12 @@ class GlanceCallServiceView(HomeAssistantView):
                     or set(raw_data) != {"button"}):
                 return self.json_message("invalid TV button", status_code=403)
             service_data = {"button": button}
+        elif domain == "media_player" and service == "select_source":
+            source = raw_data.get("source")
+            if (target_eid not in _GLASS_TVS or not isinstance(source, str)
+                    or source not in _GLASS_TV_SOURCES or set(raw_data) != {"source"}):
+                return self.json_message("invalid TV source", status_code=403)
+            service_data = {"source": source}
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
             return self.json_message("service call not permitted by card config", status_code=403)
         try:
