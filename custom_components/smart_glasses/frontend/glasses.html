@@ -150,6 +150,7 @@
     #grid[data-count="3"], #grid[data-count="4"] { grid-template: 1fr 1fr / 1fr 1fr; }
     #grid[data-count="5"], #grid[data-count="6"] { grid-template: 1fr 1fr / 1fr 1fr 1fr; }
     #grid[data-count="7"], #grid[data-count="8"] { grid-template: 1fr 1fr / 1fr 1fr 1fr 1fr; }
+    #grid:not(.stitchell-detail)[data-count="9"], #grid:not(.stitchell-detail)[data-count="10"] { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: minmax(90px,1fr); overflow-y:auto; }
 
     .cell {
       background: rgba(255,255,255,0.06);
@@ -351,6 +352,8 @@
         ];
         return [NAV("Back to Room","back"), ...sceneActions];
       }
+      if (detailScreen === "patio") return [NAV("Back to Room","back"),
+        find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (detailScreen === "music") {
         const player = "media_player.spotify_matt";
         return [NAV("Back to Room","back"), find(player),
@@ -374,8 +377,7 @@
       if (isRoom("master", /master bedroom/i)) return [
         find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
         NAV("TV Remote","remote"), NAV("Music","music"), ...sceneTile];
-      if (detailScreen === "patio") return [NAV("Back to Room","back"),
-        find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
+
       if (isRoom("outdoor", /outdoor/i)) return [
         find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
         NAV("Patio Lights","patio"), ...sceneTile];
