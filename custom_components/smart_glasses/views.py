@@ -1040,6 +1040,8 @@ def _service_call_allowed(
         return True
     if target_eid in _GLASS_MUSIC_PLAYERS and domain == "media_player" and service in _GLASS_MUSIC_SERVICES:
         return True
+    if domain == "wake_on_lan" and service == "send_magic_packet" and target_eid == "media_player.lg_webos_tv_oled65c1pub_2":
+        return True
     if target_eid in _GLASS_TVS and ((domain == "webostv" and service == "button") or (domain == "media_player" and service in _GLASS_TV_SERVICES)):
         return True
     service_str = f"{domain}.{service}"
@@ -1202,7 +1204,11 @@ class GlanceCallServiceView(HomeAssistantView):
             return self.json_message("target.entity_id must be a string", status_code=400)
 
         service_data = {}
-        if domain == "webostv" and service == "button":
+        if domain == "wake_on_lan" and service == "send_magic_packet":
+            if target_eid != "media_player.lg_webos_tv_oled65c1pub_2" or raw_data:
+                return self.json_message("invalid TV wake request", status_code=403)
+            service_data = {"mac": "64:CB:E9:05:54:36"}
+        elif domain == "webostv" and service == "button":
             button = raw_data.get("button")
             if (target_eid not in _GLASS_TVS or button not in _GLASS_REMOTE_BUTTONS
                     or set(raw_data) != {"button"}):
@@ -1266,6 +1272,8 @@ class GlanceCallServiceView(HomeAssistantView):
             if not preset_lights:
                 return self.json_message("no compatible indoor lights available", status_code=409)
             service_target = {"entity_id": preset_lights}
+        elif domain == "wake_on_lan" and service == "send_magic_packet":
+            service_target = {}
         else:
             service_target = {"entity_id": target_eid} if target_eid else {}
         try:
