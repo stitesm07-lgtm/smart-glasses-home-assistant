@@ -326,11 +326,16 @@
       if (detailScreen === "remote") {
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
         return [
-          NAV("Back","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
+          NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
           ACTION("Up","webostv.button",tv,{button:"UP"}), ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
           ACTION("Down","webostv.button",tv,{button:"DOWN"}), ACTION("Vol +","media_player.volume_up",tv), ACTION("Vol −","media_player.volume_down",tv), ACTION("Mute","media_player.volume_mute",tv),
-          ACTION("Netflix","media_player.select_source",tv,{source:"Netflix"}), ACTION("Disney+","media_player.select_source",tv,{source:"Disney+"}), ACTION("Prime Video","media_player.select_source",tv,{source:"Prime Video"}),
-          ACTION("Hulu","media_player.select_source",tv,{source:"Hulu"}), ACTION("Paramount+","media_player.select_source",tv,{source:"Paramount+"}), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
+          NAV("Streaming","streaming"), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
+        ];
+      }
+      if (detailScreen === "streaming") {
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
+        return [NAV("Remote","remote"), ACTION("Netflix","media_player.select_source",tv,{source:"Netflix"}), ACTION("Disney+","media_player.select_source",tv,{source:"Disney+"}), ACTION("Prime Video","media_player.select_source",tv,{source:"Prime Video"}),
+          ACTION("Hulu","media_player.select_source",tv,{source:"Hulu"}), ACTION("Paramount+","media_player.select_source",tv,{source:"Paramount+"})
         ];
       }
       if (detailScreen === "scenes") {
@@ -723,7 +728,7 @@
       $tabs.dataset.focusMode = focusMode;
       const total = cards.length;
       const idx = currentCardIndex;
-      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
+      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
       // Wrap-around previews so the user sees what swipe-left and
       // swipe-right will yield. Skip them entirely when there's only
       // one card to avoid showing "Office  Office  Office".
@@ -894,7 +899,7 @@
     }
 
     function fireItem(item, cellIdx) {
-      if (item.type === "nav") { openDetail(item.page); return; }
+      if (item.type === "nav") { clearArmed(); openDetail(item.page); return; }
       // Confirm gate: two taps within ARM_WINDOW_MS. The first tap arms
       // (and shows "TAP AGAIN TO CONFIRM" on the cell); the second tap
       // within the window actually fires. Anything else (navigating away,
@@ -920,6 +925,8 @@
         if (parts.length !== 2) return;
         callService(parts[0], parts[1], item.target ?? null, item.data);
       } else if (item.entity_id) {
+        // Speaker and Spotify tiles are state indicators; explicit buttons control playback.
+        if (item.entity_id.startsWith("media_player.")) return;
         const [d, s] = defaultServiceFor(item.entity_id);
         callService(d, s, item.entity_id);
       }
@@ -1048,7 +1055,7 @@
       const col = focusedCellIndex % cols;
 
       if (evt.key === "Escape") {
-        if (detailScreen) { openDetail("back"); evt.preventDefault(); return; }
+        if (detailScreen) { openDetail(detailScreen === "streaming" ? "remote" : "back"); evt.preventDefault(); return; }
         focusMode = "tabs";
         renderGrid();
         evt.preventDefault();
