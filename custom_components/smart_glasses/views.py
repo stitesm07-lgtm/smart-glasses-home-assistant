@@ -960,6 +960,9 @@ _GLASS_INDOOR_PRESETS = {
     "bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
     "warm": {"color_temp_kelvin": 3000, "brightness_pct": 85},
     "party": {"effect": "Party"},
+    "master_bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
+    "master_relax": {"color_temp_kelvin": 3000, "brightness_pct": 50},
+    "master_night": {"color_temp_kelvin": 2700, "brightness_pct": 15},
 }
 _GLASS_SCENE_ACTIONS = {
     ("script", "turn_on", "script.stitchell_spooky_loop"),
@@ -1170,7 +1173,8 @@ class GlanceCallServiceView(HomeAssistantView):
         # Never send a multi-light preset to disconnected lights; on many HA
         # integrations one unavailable target can fail the entire call.
         if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
-            preset_lights = [eid for eid in _GLASS_INDOOR_LIGHTS
+            preset_targets = (("light.master_1", "light.master_2") if preset.startswith("master_") else _GLASS_INDOOR_LIGHTS)
+            preset_lights = [eid for eid in preset_targets
                              if (state := hass.states.get(eid)) is not None
                              and state.state not in ("unavailable", "unknown")
                              and (not service_data.get("effect") or
