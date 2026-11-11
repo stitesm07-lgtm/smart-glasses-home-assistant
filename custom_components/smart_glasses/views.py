@@ -955,6 +955,17 @@ _GLASS_INDOOR_LIGHTS = tuple(
     + [f"light.island_{i}" for i in range(1, 6)]
     + [f"light.kitchen_{i}" for i in range(1, 7)]
 )
+_GLASS_ROOM_LIGHTS = {
+    "living": tuple(f"light.living_room_{i}" for i in range(1, 5)),
+    "kitchen": tuple(f"light.kitchen_{i}" for i in range(1, 7)),
+    "dining": tuple(f"light.island_{i}" for i in range(1, 6)),
+    "master": ("light.master_1", "light.master_2"),
+}
+_GLASS_SCENE_LEVELS = {
+    "bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
+    "relax": {"color_temp_kelvin": 3000, "brightness_pct": 50},
+    "night": {"color_temp_kelvin": 2700, "brightness_pct": 15},
+}
 _GLASS_INDOOR_PRESETS = {
     "normal": {"color_temp_kelvin": 4000, "brightness_pct": 100},
     "bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
@@ -963,6 +974,7 @@ _GLASS_INDOOR_PRESETS = {
     "master_bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
     "master_relax": {"color_temp_kelvin": 3000, "brightness_pct": 50},
     "master_night": {"color_temp_kelvin": 2700, "brightness_pct": 15},
+    **{f"{room}_{level}": dict(settings) for room in ("living", "kitchen", "dining", "sync") for level, settings in _GLASS_SCENE_LEVELS.items()},
 }
 _GLASS_SCENE_ACTIONS = {
     ("script", "turn_on", "script.stitchell_spooky_loop"),
@@ -1192,7 +1204,7 @@ class GlanceCallServiceView(HomeAssistantView):
         # Never send a multi-light preset to disconnected lights; on many HA
         # integrations one unavailable target can fail the entire call.
         if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
-            preset_targets = (("light.master_1", "light.master_2") if preset.startswith("master_") else _GLASS_INDOOR_LIGHTS)
+            preset_targets = (_GLASS_INDOOR_LIGHTS if preset.startswith("sync_") else _GLASS_ROOM_LIGHTS.get(preset.split("_")[0], _GLASS_INDOOR_LIGHTS))
             preset_lights = [eid for eid in preset_targets
                              if (state := hass.states.get(eid)) is not None
                              and state.state not in ("unavailable", "unknown")
