@@ -535,21 +535,20 @@
       const body = { domain, service };
       if (targetEid) body.target = { entity_id: targetEid };
       if (data) body.data = data;
-      const res = await fetch("/api/smart_glasses/glance/call_service", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      if (res.status === 401) { tokenInvalid(); return; }
-      if (res.status === 403) {
-        setStatus("Action not allowed");
-        return;
-      }
-      if (!res.ok) {
-        setStatus(`call_service ${res.status}`);
+      try {
+        const res = await fetch("/api/smart_glasses/glance/call_service", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.status === 401) { tokenInvalid(); return; }
+        if (res.status === 403) { setStatus("Action not allowed"); return; }
+        if (res.status === 429) { setStatus("Too many commands — wait a moment"); return; }
+        if (!res.ok) { setStatus(`Command failed (${res.status})`); return; }
+        setStatus("Command sent");
+      } catch (err) {
+        setStatus("Connection lost — command not sent");
+        console.error("Stitchell Glass command failed", err);
       }
     }
 
