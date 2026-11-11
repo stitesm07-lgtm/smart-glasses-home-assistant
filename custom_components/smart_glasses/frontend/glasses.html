@@ -347,11 +347,11 @@
       if (isRoom("master", /master bedroom/i)) return [
         find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
         NAV("TV Remote","remote"), NAV("Scenes","scenes")];
+      if (detailScreen === "patio") return [NAV("Back to Room","back"),
+        find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (isRoom("outdoor", /outdoor/i)) return [
         find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
         NAV("Patio Lights","patio"), NAV("Scenes","scenes")];
-      if (detailScreen === "patio") return [NAV("Back to Room","back"),
-        find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (isRoom("garage", /garage/i)) return [
         find("light.stitchell_garage_lights"), NAV("Scenes","scenes")];
       return configured;
@@ -509,7 +509,7 @@
       return m;
     }
 
-    async async function callService(domain, service, targetEid, data = null) {
+    async function callService(domain, service, targetEid, data = null) {
       const body = { domain, service };
       if (targetEid) body.target = { entity_id: targetEid };
       if (data) body.data = data;
@@ -726,7 +726,7 @@
       // Match the service name, not the media_player domain:
       // "media_player" contains "play" and previously made every action ▶.
       const service = (item.action || "").toLowerCase().split(".").pop();
-      if (service === "button") return ({UP:"▲",DOWN:"▼",LEFT:"◀",RIGHT:"▶",ENTER:"OK",BACK:"↩",HOME:"⌂"})[item.data?.button] || "•";
+      if (service === "button" && item.action === "webostv.button") return ({UP:"▲",DOWN:"▼",LEFT:"◀",RIGHT:"▶",ENTER:"OK",BACK:"↩",HOME:"⌂"})[item.data?.button] || "•";
       if (service === "toggle" && /power/i.test(label)) return "⏻";
       if (service === "volume_up" || /volume\s*(\+|up|plus)|louder/.test(label)) return "+";
       if (service === "volume_down" || /volume\s*(−|-|down|minus)|quieter/.test(label)) return "−";
