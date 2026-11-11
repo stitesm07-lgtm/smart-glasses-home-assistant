@@ -840,7 +840,7 @@ def _card_entity_ids(cards: list[dict[str, Any]]) -> set[str]:
         for item in c.get("items", []):
             if item.get("type") == "entity" and isinstance(item.get("entity_id"), str):
                 out.add(item["entity_id"])
-    return out | _room_shortcut_ids(cards)
+    # Read-only music state for the compact Spotify/speaker page.\n    return out | _room_shortcut_ids(cards) | _GLASS_MUSIC_PLAYERS
 
 
 def _augment_with_group_meta(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
