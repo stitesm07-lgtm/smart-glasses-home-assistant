@@ -9,10 +9,10 @@
     "frontend",
     "http"
   ],
-  "documentation": "https://github.com/runningoec/smart-glasses-home-assistant",
+  "documentation": "https://github.com/stitesm07-lgtm/smart-glasses-home-assistant",
   "integration_type": "service",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/runningoec/smart-glasses-home-assistant/issues",
+  "issue_tracker": "https://github.com/stitesm07-lgtm/smart-glasses-home-assistant/issues",
   "requirements": [],
-  "version": "0.12.1"
+  "version": "0.12.2"
 }
