@@ -329,31 +329,35 @@
         ];
       }
       if (detailScreen === "scenes") {
-        const room = (card.name || "").toLowerCase();
-        const scenes = cards.flatMap(c => c.items || []).filter(x =>
-          x.type === "action" && /script\.(stitchell_spooky_loop|stitchell_spooky_stop|stitchell_movie_mode)/.test(x.target || ""));
-        const selected = isRoom("living",/living room/i) ? scenes :
-          configured.filter(x => x.type === "action" || /^scene\.|^script\./.test(x.entity_id || ""));
-        return [NAV("Back to Room","back"), ...selected.slice(0,7)];
+        // Reuse only configured Home Assistant scene/script actions; never invent calls.
+        const selected = cards.flatMap(c => c.items || []).filter(x =>
+          (x.type === "action" && /^(script|scene)\./.test(x.action || "")) ||
+          (x.type === "entity" && /^(scene|script)\./.test(x.entity_id || "")));
+        const unique = [...new Map(selected.map(x => [x.action + ":" + (x.target || x.entity_id), x])).values()];
+        return [NAV("Back to Room","back"), ...unique.slice(0,12)];
       }
+      const hasScenes = cards.some(c => (c.items || []).some(x =>
+        (x.type === "action" && /^(script|scene)\./.test(x.action || "")) ||
+        (x.type === "entity" && /^(script|scene)\./.test(x.entity_id || ""))));
+      const sceneTile = hasScenes ? [NAV("Scenes","scenes")] : [];
       if (isRoom("living", /living room/i)) return [
         find("switch.living_room_switch_switch_1"), find("light.living_room"),
-        NAV("TV Remote","remote"), NAV("Scenes","scenes"),
+        NAV("TV Remote","remote"), ...sceneTile,
         find("light.tv_lights"), find("light.fireplace_drawer")];
       if (isRoom("kitchen", /kitchen/i)) return [
-        find("switch.kitchen_switch_switch_1"), find("light.stitchell_kitchen_lights"), NAV("Scenes","scenes")];
+        find("switch.kitchen_switch_switch_1"), find("light.stitchell_kitchen_lights"), ...sceneTile];
       if (isRoom("dining", /dining room/i)) return [
-        find("switch.island_lights_switch_1"), find("light.stitchell_island_lights"), NAV("Scenes","scenes")];
+        find("switch.island_lights_switch_1"), find("light.stitchell_island_lights"), ...sceneTile];
       if (isRoom("master", /master bedroom/i)) return [
         find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
-        NAV("TV Remote","remote"), NAV("Scenes","scenes")];
+        NAV("TV Remote","remote"), ...sceneTile];
       if (detailScreen === "patio") return [NAV("Back to Room","back"),
         find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (isRoom("outdoor", /outdoor/i)) return [
         find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
-        NAV("Patio Lights","patio"), NAV("Scenes","scenes")];
+        NAV("Patio Lights","patio"), ...sceneTile];
       if (isRoom("garage", /garage/i)) return [
-        find("light.stitchell_garage_lights"), NAV("Scenes","scenes")];
+        find("light.stitchell_garage_lights"), ...sceneTile];
       return configured;
     }
     function openDetail(page) {
