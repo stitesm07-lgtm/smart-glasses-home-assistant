@@ -1140,6 +1140,13 @@ class GlanceCallServiceView(HomeAssistantView):
                     or set(raw_data) != {"button"}):
                 return self.json_message("invalid TV button", status_code=403)
             service_data = {"button": button}
+        elif domain == "media_player" and service == "volume_mute":
+            if target_eid not in _GLASS_TVS or raw_data:
+                return self.json_message("invalid TV mute", status_code=403)
+            current = hass.states.get(target_eid)
+            if current is None or current.state in ("unavailable", "unknown"):
+                return self.json_message("TV unavailable", status_code=409)
+            service_data = {"is_volume_muted": not bool(current.attributes.get("is_volume_muted", False))}
         elif domain == "media_player" and service == "select_source":
             source = raw_data.get("source")
             if (target_eid not in _GLASS_TVS or not isinstance(source, str)
