@@ -345,19 +345,24 @@
         ];
       }
       if (detailScreen === "scenes") {
-        const sceneActions = [
-          ACTION("Normal White","light.turn_on","light.stitchell_indoor_preset",{preset:"normal"}),
-          ACTION("Bright White","light.turn_on","light.stitchell_indoor_preset",{preset:"bright"}),
-          ACTION("Warm White","light.turn_on","light.stitchell_indoor_preset",{preset:"warm"}),
-          ...(isRoom("master", /master bedroom/i) ? [
-            ACTION("Bright","light.turn_on","light.stitchell_indoor_preset",{preset:"master_bright"}),
-            ACTION("Relax","light.turn_on","light.stitchell_indoor_preset",{preset:"master_relax"}),
-            ACTION("Night","light.turn_on","light.stitchell_indoor_preset",{preset:"master_night"})
-          ] : []),
-          ACTION("Movie Mode","automation.trigger","automation.stitchell_movie_mode_paused",{skip_condition:false}),
-          ACTION("Movie Mode Off","automation.trigger","automation.stitchell_movie_mode_off",{skip_condition:false})
-        ];
-        return [NAV("Back to Room","back"), ...sceneActions];
+        const preset = (name, key) => ACTION(name,"light.turn_on","light.stitchell_indoor_preset",{preset:key});
+        const room = isRoom("living", /living room/i) ? "living" :
+          isRoom("kitchen", /kitchen/i) ? "kitchen" :
+          isRoom("dining", /dining room/i) ? "dining" :
+          isRoom("master", /master bedroom/i) ? "master" : null;
+        const actions = room ? [
+          preset("Bright",room+"_bright"), preset("Relax",room+"_relax"), preset("Night",room+"_night")
+        ] : [];
+        if (["living","kitchen","dining"].includes(room)) {
+          actions.push(preset("Sync Bright","sync_bright"),preset("Sync Relax","sync_relax"),preset("Sync Night","sync_night"));
+        }
+        if (room === "living") {
+          actions.push(
+            ACTION("Movie Mode","automation.trigger","automation.stitchell_movie_mode_paused",{skip_condition:false}),
+            ACTION("Movie Mode Off","automation.trigger","automation.stitchell_movie_mode_off",{skip_condition:false})
+          );
+        }
+        return [NAV("Back to Room","back"), ...actions];
       }
       if (detailScreen === "patio") return [NAV("Back to Room","back"),
         find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
