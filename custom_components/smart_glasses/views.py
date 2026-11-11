@@ -1137,6 +1137,8 @@ class GlanceCallServiceView(HomeAssistantView):
             if raw_data and raw_data != {"skip_condition": False}:
                 return self.json_message("invalid automation options", status_code=403)
             service_data = {"skip_condition": False}
+        if raw_data and not service_data and (domain, service, target_eid) not in _GLASS_SCENE_ACTIONS:
+            return self.json_message("unsupported service data", status_code=403)
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
             return self.json_message("service call not permitted by card config", status_code=403)
         try:
