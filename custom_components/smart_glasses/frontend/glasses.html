@@ -328,7 +328,7 @@
       const find = (id) => configured.find(x => x.entity_id === id) || ENTITY(id);
       const isRoom = (id, pattern) => card.id === id || pattern.test(card.name || "");
       if (detailScreen === "remote") {
-        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
         return [
           NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
           ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
@@ -339,7 +339,7 @@
         ];
       }
       if (detailScreen === "streaming") {
-        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
+        const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
         return [NAV("Remote","remote"), ACTION("Netflix","media_player.select_source",tv,{source:"Netflix"}), ACTION("Disney+","media_player.select_source",tv,{source:"Disney+"}), ACTION("Prime Video","media_player.select_source",tv,{source:"Prime Video"}),
           ACTION("Hulu","media_player.select_source",tv,{source:"Hulu"}), ACTION("Paramount+","media_player.select_source",tv,{source:"Paramount+"})
         ];
