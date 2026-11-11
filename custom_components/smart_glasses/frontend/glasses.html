@@ -331,7 +331,7 @@
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
         return [
           NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
-          {type:"spacer"}, ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
+          ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
           ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
           {type:"spacer"}, ACTION("Down","webostv.button",tv,{button:"DOWN"}), {type:"spacer"},
           ACTION("Vol −","media_player.volume_down",tv), ACTION("Mute","media_player.volume_mute",tv), ACTION("Vol +","media_player.volume_up",tv),
