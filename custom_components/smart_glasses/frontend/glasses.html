@@ -1054,8 +1054,8 @@
         evt.preventDefault();
       } else if (evt.key === "ArrowUp") {
         if (row === 0) {
-          // Already at the top row — bounce back to the tab strip.
-          focusMode = "tabs";
+          // Keep detail controls navigable; Escape returns to the room.
+          if (!detailScreen) focusMode = "tabs";
         } else {
           focusedCellIndex = Math.max(0, focusedCellIndex - cols);
         }
@@ -1073,7 +1073,7 @@
         if (col > 0) {
           focusedCellIndex--;
           renderGrid();
-        } else {
+        } else if (!detailScreen) {
           switchCard(-1);
         }
         evt.preventDefault();
@@ -1083,7 +1083,7 @@
         if (col < cols - 1 && focusedCellIndex + 1 < items.length) {
           focusedCellIndex++;
           renderGrid();
-        } else {
+        } else if (!detailScreen) {
           switchCard(1);
         }
         evt.preventDefault();
