@@ -813,11 +813,14 @@ def _lookup_glasses_token(hass: HomeAssistant, token: Any) -> dict[str, Any] | N
 # Room shortcuts displayed by the Stitchell glasses UI. Only these exact
 # entity IDs are added, and only when the matching room card is configured.
 _ROOM_SHORTCUT_ENTITIES = {
-    "living": {"switch.living_room_switch_switch_1"},
-    "kitchen": {"switch.kitchen_switch_switch_1"},
-    "dining": {"switch.island_lights_switch_1"},
-    "outdoor": {"switch.tp_link_smart_plug_9ce3_patio_lights"},
+    "living": {"switch.living_room_switch_switch_1", "light.living_room", "light.tv_lights", "light.fireplace_drawer"},
+    "kitchen": {"switch.kitchen_switch_switch_1", "light.stitchell_kitchen_lights"},
+    "dining": {"switch.island_lights_switch_1", "light.stitchell_island_lights"},
+    "master": {"light.stitchell_master_bedroom_lights", "light.stitchell_master_closet_lights"},
+    "outdoor": {"switch.tp_link_smart_plug_9ce3_patio_lights", "light.stitchell_front_outdoor_lights", "light.stitchell_back_outdoor_lights", "light.front_patio_1", "light.front_patio_2", "light.front_patio_3"},
+    "garage": {"light.stitchell_garage_lights"},
 }
+
 
 
 def _room_shortcut_ids(cards: list[dict[str, Any]]) -> set[str]:
@@ -826,7 +829,7 @@ def _room_shortcut_ids(cards: list[dict[str, Any]]) -> set[str]:
         name = str(card.get("name", "")).lower()
         card_id = str(card.get("id", "")).lower()
         for room, entities in _ROOM_SHORTCUT_ENTITIES.items():
-            if card_id == room or (room == "living" and "living room" in name) or (room == "dining" and "dining room" in name) or (room in ("kitchen", "outdoor") and room in name):
+            if card_id == room or (room == "living" and "living room" in name) or (room == "dining" and "dining room" in name) or (room in ("kitchen", "outdoor", "garage", "master") and room in name):
                 out.update(entities)
     return out
 
