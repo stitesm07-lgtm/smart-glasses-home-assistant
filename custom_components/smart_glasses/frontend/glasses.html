@@ -59,6 +59,8 @@
     #grid.stitchell-room .cell .name { font-size: 20px; font-weight: 650; }
     #grid.stitchell-room .cell[data-type="nav"] .value { font-size: 32px; color: #f5d37c; }
     #grid.stitchell-detail { grid-template: repeat(3,minmax(0,1fr)) / repeat(3,minmax(0,1fr)) !important; padding: 12px 16px 24px; gap: 9px; }
+    /* Detail pages may contain more than nine controls; keep them accessible. */
+    #grid.stitchell-detail { grid-template-rows: none !important; grid-auto-rows: minmax(88px, auto); overflow-y: auto; align-content: start; }
     #grid.stitchell-detail .cell .value { font-size: 25px !important; }
     #grid.stitchell-detail .cell .name { font-size: 15px; }
     #grid.stitchell-detail .cell[data-type="nav"] .value { color: #f5d37c; }
@@ -772,7 +774,7 @@
       renderTabs();
 
       $grid.dataset.count = String(items.length);
-      $grid.style.gridTemplateColumns = detailScreen === "remote" ? "repeat(3, minmax(0, 1fr))" : "";
+      $grid.style.gridTemplateColumns = detailScreen ? "repeat(3, minmax(0, 1fr))" : "";
       $grid.classList.toggle("stitchell-room", !detailScreen && items.length === 4);
       $grid.classList.toggle("stitchell-detail", !!detailScreen);
       $grid.classList.toggle("stitchell-remote", detailScreen === "remote");
@@ -829,7 +831,7 @@
       if (n <= 2) return 2;
       if (n <= 4) return 2;
       if (n <= 6) return 3;
-      return 3; // Remote controls stay in three deliberate columns
+      return detailScreen ? 3 : 4; // Match detail and standard CSS grids
     }
 
     // Common helpers for nav.
