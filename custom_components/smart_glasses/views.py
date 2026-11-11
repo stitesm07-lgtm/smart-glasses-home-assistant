@@ -49,6 +49,7 @@ from urllib.parse import urlparse
 import yaml
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.components.camera import async_get_image
 from homeassistant.core import HomeAssistant, callback
 
 from .const import (
@@ -1090,6 +1091,41 @@ class GlanceStatesView(HomeAssistantView):
         return self.json(out)
 
 
+class GlanceCameraSnapshotView(HomeAssistantView):
+    """Paired-glasses-only snapshots of two explicitly allowed cameras."""
+
+    url = f"{API_PREFIX}/glance/camera/{camera_name}"
+    name = f"{DOMAIN}:glance_camera_snapshot"
+    requires_auth = False
+
+    _CAMERAS = {
+        "front": "camera.front_yard_front_yard_doorbell",
+        "living": "camera.living_room_living_room_camera",
+    }
+
+    async def get(self, request: web.Request, camera_name: str) -> web.Response:
+        hass: HomeAssistant = request.app["hass"]
+        _pairing, err = _require_glasses_pairing(self, request, hass)
+        if err is not None:
+            return err
+        entity_id = self._CAMERAS.get(camera_name)
+        if not entity_id:
+            return self.json_message("unknown camera", status_code=404)
+        state = hass.states.get(entity_id)
+        if state is None or state.state in ("unavailable", "unknown"):
+            return self.json_message("camera unavailable", status_code=503)
+        try:
+            picture = await async_get_image(hass, entity_id, timeout=10)
+        except Exception:
+            _LOGGER.exception("Stitchell Glass camera snapshot failed")
+            return self.json_message("camera snapshot unavailable", status_code=503)
+        return web.Response(
+            body=picture.content,
+            content_type=picture.content_type,
+            headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+        )
+
+
 class GlanceCallServiceView(HomeAssistantView):
     """Scoped service-call proxy. Only services + targets present on a card
     are accepted. Implements both the implicit toggle (when the glasses tap
@@ -1332,6 +1368,7 @@ ALL_VIEWS: list[type[HomeAssistantView]] = [
     # access to HA's native /api/* with scope-limited equivalents.
     GlanceCardsView,
     GlanceStatesView,
+    GlanceCameraSnapshotView,
     GlanceCallServiceView,
     GlanceWebSocketView,
 ]
