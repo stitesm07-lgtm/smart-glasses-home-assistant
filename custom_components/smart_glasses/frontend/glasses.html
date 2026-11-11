@@ -151,6 +151,8 @@
     #grid[data-count="5"], #grid[data-count="6"] { grid-template: 1fr 1fr / 1fr 1fr 1fr; }
     #grid[data-count="7"], #grid[data-count="8"] { grid-template: 1fr 1fr / 1fr 1fr 1fr 1fr; }
     #grid:not(.stitchell-detail)[data-count="9"], #grid:not(.stitchell-detail)[data-count="10"] { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: minmax(90px,1fr); overflow-y:auto; }
+    #grid:not(.stitchell-detail) { grid-auto-flow: row; }
+    #grid:not(.stitchell-detail)[data-count="11"], #grid:not(.stitchell-detail)[data-count="12"] { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: minmax(90px,1fr); overflow-y:auto; }
 
     .cell {
       background: rgba(255,255,255,0.06);
@@ -834,7 +836,7 @@
       }).join("");
       showPanel("grid");
       const focusedTile = $grid.querySelector(".cell.focused");
-      if (focusedTile && detailScreen) focusedTile.scrollIntoView({block:"nearest", inline:"nearest"});
+      if (focusedTile) focusedTile.scrollIntoView({block:"nearest", inline:"nearest"});
     }
 
     // How many columns the grid CSS lays out for a given item count. Keep
