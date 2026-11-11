@@ -327,6 +327,8 @@
       const configured = card.items || [];
       const find = (id) => configured.find(x => x.entity_id === id) || ENTITY(id);
       const isRoom = (id, pattern) => card.id === id || pattern.test(card.name || "");
+      if (detailScreen === "cameras") return [NAV("Back to Room","back"), NAV("Front Door","camera-front"), NAV("Living Room","camera-living")];
+      if (detailScreen === "camera-front" || detailScreen === "camera-living") return [NAV("Cameras","cameras"), NAV("Refresh","camera-refresh")];
       if (detailScreen === "remote") {
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub";
         return [
@@ -383,7 +385,7 @@
       const sceneTile = [NAV("Scenes","scenes")];
       if (isRoom("living", /living room/i)) return [
         find("switch.living_room_switch_switch_1"), find("light.living_room"),
-        NAV("TV Remote","remote"), NAV("Music","music"), ...sceneTile,
+        NAV("TV Remote","remote"), NAV("Music","music"), NAV("Cameras","cameras"), ...sceneTile,
         find("light.tv_lights"), find("light.fireplace_drawer")];
       if (isRoom("kitchen", /kitchen/i)) return [
         find("switch.kitchen_switch_switch_1"), find("light.stitchell_kitchen_lights"), ...sceneTile];
@@ -391,20 +393,41 @@
         find("switch.island_lights_switch_1"), find("light.stitchell_island_lights"), ...sceneTile];
       if (isRoom("master", /master bedroom/i)) return [
         find("light.stitchell_master_bedroom_lights"), find("light.stitchell_master_closet_lights"),
-        NAV("TV Remote","remote"), NAV("Music","music"), ...sceneTile];
+        NAV("TV Remote","remote"), NAV("Music","music"), NAV("Cameras","cameras"), ...sceneTile];
 
       if (isRoom("outdoor", /outdoor/i)) return [
         find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
-        NAV("Patio Lights","patio"), ...sceneTile];
+        NAV("Patio Lights","patio"), NAV("Cameras","cameras"), ...sceneTile];
       if (isRoom("garage", /garage/i)) return [
         find("light.stitchell_garage_lights"), ...sceneTile];
       return configured;
     }
     function openDetail(page) {
+      if (page === "camera-refresh") { loadCameraSnapshot(); return; }
       detailScreen = page === "back" ? null : page;
       focusedCellIndex = 0;
       focusMode = "cells";
       renderGrid();
+      if (detailScreen?.startsWith("camera-")) loadCameraSnapshot();
+    }
+    let cameraImageUrl = null;
+    let cameraRequestId = 0;
+    async function loadCameraSnapshot() {
+      if (detailScreen !== "camera-front" && detailScreen !== "camera-living") return;
+      const requestId = ++cameraRequestId;
+      const camera = detailScreen === "camera-front" ? "front" : "living";
+      setStatus("Loading camera snapshot…");
+      try {
+        const res = await fetch(`/api/smart_glasses/glance/camera/${camera}`, {headers:{Authorization:`Bearer ${token}`}, cache:"no-store"});
+        if (!res.ok) throw new Error(`Camera unavailable (${res.status})`);
+        const url = URL.createObjectURL(await res.blob());
+        if (requestId !== cameraRequestId || !detailScreen?.startsWith("camera-")) { URL.revokeObjectURL(url); return; }
+        if (cameraImageUrl) URL.revokeObjectURL(cameraImageUrl);
+        cameraImageUrl = url;
+        const img = document.getElementById("stitchell-camera-image");
+        if (img) img.src = url;
+        setStatus("Snapshot · tap Refresh for latest");
+      } catch(err) { if (requestId === cameraRequestId) setStatus(err.message); }
     }
     let cards = [];              // configured cards
     let currentCardIndex = 0;
@@ -746,7 +769,7 @@
       $tabs.dataset.focusMode = focusMode;
       const total = cards.length;
       const idx = currentCardIndex;
-      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
+      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming",cameras:"Cameras","camera-front":"Front Door","camera-living":"Living Room"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
       // Wrap-around previews so the user sees what swipe-left and
       // swipe-right will yield. Skip them entirely when there's only
       // one card to avoid showing "Office  Office  Office".
@@ -848,6 +871,10 @@
           `;
         }
       }).join("");
+      if (detailScreen === "camera-front" || detailScreen === "camera-living") {
+        $grid.insertAdjacentHTML("beforeend", `<div style="grid-column:1/-1;min-height:190px;display:flex;align-items:center;justify-content:center"><img id="stitchell-camera-image" alt="Camera snapshot" style="max-width:100%;max-height:320px;object-fit:contain;border-radius:8px" /></div>`);
+        if (cameraImageUrl) document.getElementById("stitchell-camera-image").src = cameraImageUrl;
+      }
       showPanel("grid");
       const focusedTile = $grid.querySelector(".cell.focused");
       if (focusedTile) focusedTile.scrollIntoView({block:"nearest", inline:"nearest"});
