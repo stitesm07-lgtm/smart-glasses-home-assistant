@@ -950,6 +950,17 @@ _GLASS_TVS = frozenset({
     "media_player.lg_webos_tv_55qned80uqa",
 })
 _GLASS_REMOTE_BUTTONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "HOME"})
+_GLASS_INDOOR_LIGHTS = tuple(
+    [f"light.living_room_{i}" for i in range(1, 5)]
+    + [f"light.island_{i}" for i in range(1, 6)]
+    + [f"light.kitchen_{i}" for i in range(1, 7)]
+)
+_GLASS_INDOOR_PRESETS = {
+    "normal": {"color_temp_kelvin": 4000, "brightness_pct": 100},
+    "bright": {"color_temp_kelvin": 6500, "brightness_pct": 100},
+    "warm": {"color_temp_kelvin": 3000, "brightness_pct": 85},
+    "party": {"effect": "Party"},
+}
 _GLASS_SCENE_ACTIONS = {
     ("script", "turn_on", "script.stitchell_spooky_loop"),
     ("script", "turn_on", "script.stitchell_spooky_stop"),
@@ -990,6 +1001,8 @@ def _service_call_allowed(
         return False
     # TV commands are limited to the two explicitly configured LG televisions.
     # The command payload itself is validated separately below.
+    if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
+        return True
     if (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
         return True
     if target_eid in _GLASS_MUSIC_PLAYERS and domain == "media_player" and service in _GLASS_MUSIC_SERVICES:
@@ -1133,6 +1146,12 @@ class GlanceCallServiceView(HomeAssistantView):
                     or source not in _GLASS_TV_SOURCES or set(raw_data) != {"source"}):
                 return self.json_message("invalid TV source", status_code=403)
             service_data = {"source": source}
+        elif domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
+            preset = raw_data.get("preset")
+            if not isinstance(preset, str) or preset not in _GLASS_INDOOR_PRESETS or set(raw_data) != {"preset"}:
+                return self.json_message("invalid indoor preset", status_code=403)
+            service_data = dict(_GLASS_INDOOR_PRESETS[preset])
+            target_eid = "light.stitchell_indoor_preset"
         elif domain == "automation" and service == "trigger" and (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
             if raw_data and raw_data != {"skip_condition": False}:
                 return self.json_message("invalid automation options", status_code=403)
@@ -1145,7 +1164,7 @@ class GlanceCallServiceView(HomeAssistantView):
             await hass.services.async_call(
                 domain=domain,
                 service=service,
-                target={"entity_id": target_eid} if target_eid else {},
+                target={"entity_id": list(_GLASS_INDOOR_LIGHTS)} if (domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset") else ({"entity_id": target_eid} if target_eid else {}),
                 service_data=service_data,
                 blocking=False,
             )
