@@ -62,6 +62,7 @@
     /* Detail pages may contain more than nine controls; keep them accessible. */
     #grid.stitchell-detail { grid-template: none / repeat(3,minmax(0,1fr)) !important; grid-auto-rows: minmax(88px, auto); overflow-y: auto; align-content: start; }
     #grid.stitchell-detail .cell { min-height: 88px; }
+    #grid.stitchell-remote .remote-spacer { min-height: 88px; pointer-events: none; }
     #grid.stitchell-detail .cell .value { font-size: 25px !important; }
     #grid.stitchell-detail .cell .name { font-size: 15px; }
     #grid.stitchell-detail .cell[data-type="nav"] .value { color: #f5d37c; }
@@ -330,8 +331,10 @@
         const tv = isRoom("master", /master bedroom/i) ? "media_player.lg_webos_tv_55qned80uqa" : "media_player.lg_webos_tv_oled65c1pub_2";
         return [
           NAV("Rooms","back"), ACTION("Power","media_player.toggle",tv), ACTION("Home","webostv.button",tv,{button:"HOME"}), ACTION("Back","webostv.button",tv,{button:"BACK"}),
-          ACTION("Up","webostv.button",tv,{button:"UP"}), ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
-          ACTION("Down","webostv.button",tv,{button:"DOWN"}), ACTION("Vol +","media_player.volume_up",tv), ACTION("Vol −","media_player.volume_down",tv), ACTION("Mute","media_player.volume_mute",tv),
+          {type:"spacer"}, ACTION("Up","webostv.button",tv,{button:"UP"}), {type:"spacer"},
+          ACTION("Left","webostv.button",tv,{button:"LEFT"}), ACTION("OK","webostv.button",tv,{button:"ENTER"}), ACTION("Right","webostv.button",tv,{button:"RIGHT"}),
+          {type:"spacer"}, ACTION("Down","webostv.button",tv,{button:"DOWN"}), {type:"spacer"},
+          ACTION("Vol −","media_player.volume_down",tv), ACTION("Mute","media_player.volume_mute",tv), ACTION("Vol +","media_player.volume_up",tv),
           NAV("Streaming","streaming"), ACTION("Play","media_player.media_play",tv), ACTION("Pause","media_player.media_pause",tv)
         ];
       }
@@ -796,6 +799,7 @@
       $grid.innerHTML = items.map((item, idx) => {
         const focused = (focusMode === "cells" && idx === focusedCellIndex) ? " focused" : "";
         const armedCls = (idx === armedIdx) ? " armed" : "";
+        if (item.type === "spacer") return `<div class="remote-spacer" aria-hidden="true"></div>`;
         if (item.type === "nav") {
           const symbol = item.page === "back" ? "←" : item.page === "remote" ? "▣" : item.page === "patio" ? "☼" : item.page === "music" ? "♫" : "✦";
           return `<div class="cell${focused}${armedCls}" data-idx="${idx}" data-type="nav" data-on="unset" data-stale="false"><div class="value">${symbol}</div><div class="name">${esc(item.name)}</div></div>`;
@@ -1060,6 +1064,22 @@
       // (so navigating away or pressing Esc drops the "tap again to
       // confirm" state). Enter handles arm/fire on its own below.
       if (evt.key !== "Enter" && armed) clearArmed();
+      // Remote has intentional empty slots to form a proper directional pad.
+      // Navigate past those gaps rather than focusing invisible cells.
+      if (detailScreen === "remote" && ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(evt.key)) {
+        const step = {ArrowUp:-3,ArrowDown:3,ArrowLeft:-1,ArrowRight:1}[evt.key];
+        let next = focusedCellIndex;
+        while (true) {
+          const candidate = next + step;
+          if (candidate < 0 || candidate >= items.length) break;
+          if ((evt.key === "ArrowLeft" || evt.key === "ArrowRight") && Math.floor(candidate/3) !== Math.floor(next/3)) break;
+          next = candidate;
+          if (items[next].type !== "spacer") { focusedCellIndex = next; break; }
+        }
+        renderGrid();
+        evt.preventDefault();
+        return;
+      }
       const cols = detailScreen ? 3 : (items.length === 4 ? 2 : gridCols(items.length));
       const row = Math.floor(focusedCellIndex / cols);
       const col = focusedCellIndex % cols;
