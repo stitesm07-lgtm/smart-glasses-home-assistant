@@ -325,7 +325,8 @@
     let detailScreen = null; // hidden panel, never added to room tabs
     const NAV = (name, page) => ({type:"nav", name, page});
     const ENTITY = (entity_id) => ({type:"entity",entity_id});
-    const ACTION = (name, action, target, data = null) => ({type:"action",name,action,target,data});\n    const CONFIRM_ACTION = (name, action, target) => ({...ACTION(name,action,target),confirm:true});
+    const ACTION = (name, action, target, data = null) => ({type:"action",name,action,target,data});
+    const CONFIRM_ACTION = (name, action, target) => ({...ACTION(name,action,target),confirm:true});
     // Preserve backend-configured cards. Virtual tiles are only UI shortcuts.
     function visibleItems() {
       const card = cards[currentCardIndex];
