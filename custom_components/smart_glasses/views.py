@@ -836,7 +836,7 @@ _ROOM_SHORTCUT_ENTITIES = {
     "dining": {"switch.island_lights_switch_1", "light.stitchell_island_lights"},
     "master": {"light.stitchell_master_bedroom_lights", "light.stitchell_master_closet_lights"},
     "outdoor": {"switch.tp_link_smart_plug_9ce3_patio_lights", "light.stitchell_front_outdoor_lights", "light.stitchell_back_outdoor_lights", "light.front_patio_1", "light.front_patio_2", "light.front_patio_3"},
-    "garage": {"light.stitchell_garage_lights"},
+    "garage": {"light.stitchell_garage_lights", "sensor.outdoor_front_ram_1500_fuel_remaining", "sensor.outdoor_front_ram_1500_driving_range", "sensor.outdoor_front_ram_1500_12v_battery", "sensor.outdoor_front_ram_1500_odometer", "sensor.outdoor_front_ram_1500_front_left_tire_pressure", "sensor.outdoor_front_ram_1500_front_right_tire_pressure", "sensor.outdoor_front_ram_1500_rear_left_tire_pressure", "sensor.outdoor_front_ram_1500_rear_right_tire_pressure", "sensor.outdoor_front_ram_1500_oil_life", "device_tracker.outdoor_front_ram_1500_location"},
 }
 
 
