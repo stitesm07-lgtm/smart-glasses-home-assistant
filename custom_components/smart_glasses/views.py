@@ -1044,7 +1044,9 @@ def _service_call_allowed(
         return False
     # TV commands are limited to the two explicitly configured LG televisions.
     # The command payload itself is validated separately below.
-    if (domain, service, target_eid) in _GLASS_TRUCK_CONTROLS:\n        return True\n    if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
+    if (domain, service, target_eid) in _GLASS_TRUCK_CONTROLS:
+        return True
+    if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
         return True
     if (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
         return True
