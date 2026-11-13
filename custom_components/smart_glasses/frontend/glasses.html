@@ -71,6 +71,29 @@
     #pair h1 { color: #f5d37c; }
 
 
+
+    /* Single 600x600 home overview: no scrolling, no nested tiles. */
+    #grid.stitchell-overview { display:block; padding:8px 18px 14px; overflow:hidden; }
+    .overview-panel { height:100%; box-sizing:border-box; border:2px solid #94733a; border-radius:15px; background:#0c0b09; padding:12px 18px; display:flex; flex-direction:column; justify-content:space-between; color:#f5eddb; }
+    .overview-heading { display:flex; justify-content:space-between; align-items:center; color:#e8be69; font-size:21px; font-weight:750; }
+    .overview-heading small { font-size:12px; color:#ad986c; }
+    .overview-health { display:flex; gap:12px; align-items:center; border-top:1px solid #66502d; padding-top:9px; }
+    .overview-health .symbol { font-size:29px; color:#e8be69; }
+    .overview-health strong { display:block; font-size:21px; }
+    .overview-health span { font-size:13px; color:#aaa; }
+    .overview-health span.ok, .overview-value.ok { color:#63d59a; }
+    .overview-health span.warn, .overview-value.warn { color:#efb85c; }
+    .overview-section { font-size:16px; color:#e8be69; font-weight:700; border-top:1px solid #57482d; padding-top:8px; display:flex; justify-content:space-between; }
+    .overview-section small { font-size:13px; color:#b9aa8b; }
+    .overview-person, .overview-stat { display:flex; justify-content:space-between; align-items:center; padding:3px 6px; font-size:17px; }
+    .overview-person .overview-value { font-size:15px; }
+    .overview-value { color:#eee; }
+    .overview-value.dim { color:#a7a7a7; }
+    .overview-stat { border-top:1px solid #302c25; padding:8px 5px; }
+    .overview-actions { display:flex; justify-content:space-between; border-top:1px solid #94733a; padding-top:10px; color:#e8be69; font-size:15px; }
+    .overview-actions .cell { border:0; background:transparent; padding:4px 8px; min-height:unset; cursor:pointer; }
+    .overview-actions .cell.focused { outline:2px solid #f5d37c; border-radius:6px; }
+
     /* Tab strip across the top:
          ┌────────────────────────────────────────────┐
          │  Kitchen     Living Room     Bedroom       │   ← prev / current / next
@@ -590,7 +613,7 @@
       const data = await res.json();
       const configured = data.cards ?? [];
       // Vehicle is a standalone tab even when no Garage card was configured.
-      return [...configured.filter(c => c.id !== "truck"), {id:"truck",name:"Ram 1500",items:[]}];
+      return [{id:"home-overview",name:"Home",items:[]}, ...configured.filter(c => c.id !== "truck" && c.id !== "home-overview"), {id:"truck",name:"Ram 1500",items:[]}];
     }
 
     async function fetchStates() {
@@ -842,7 +865,57 @@
       if (/party|dance|rainbow/.test(label)) return "✧";
       return "✦";
     }
+
+    const HOME_PEOPLE = [
+      ["Matt","person.matt_stites"], ["Lacey","person.lacey_stites"],
+      ["Karson","person.karson_stites"], ["Kira","person.kira_stites"],
+      ["Weston","person.weston"]
+    ];
+    function renderHomeOverview() {
+      const personRows = HOME_PEOPLE.map(([name,eid]) => {
+        const state = states.get(eid)?.state;
+        const home = state === "home";
+        const known = !!state && state !== "unknown" && state !== "unavailable";
+        const label = !known ? "Unknown" : home ? "Home" : "Away";
+        return '<div class="overview-person"><span>'+esc(name)+'</span><span class="overview-value '+(home?'ok':known?'dim':'warn')+'">'+(home?'● ':known?'○ ':'? ')+label+'</span></div>';
+      }).join("");
+      const persons = HOME_PEOPLE.map(([,eid])=>states.get(eid)?.state);
+      const knownPeople = persons.filter(s=>s && s!=="unknown" && s!=="unavailable");
+      const homeCount = persons.filter(s=>s==="home").length;
+      const doorState = states.get("lock.schlage_connect_smart_deadbolt")?.state;
+      const knownDoor = doorState && !["unknown","unavailable"].includes(doorState);
+      const doorText = !knownDoor ? "Unknown" : doorState === "locked" ? "Locked" : doorState === "unlocked" ? "Unlocked" : esc(doorState);
+      const lights = [...states.values()].filter(s=>s.entity_id?.startsWith("light.") && !Array.isArray(s.attributes?.entity_id));
+      const onLights = lights.filter(s=>s.state==="on").length;
+      const lightText = lights.length ? onLights+" On" : "Unknown";
+      const temp = states.get("sensor.hallway_hallway_temperature");
+      const unit = temp?.attributes?.unit_of_measurement || "°";
+      const tempText = temp && !["unknown","unavailable"].includes(temp.state) ? esc(temp.state)+esc(unit) : "Unknown";
+      const attention = doorState === "unlocked";
+      const health = attention ? "Door unlocked" : !knownDoor ? "Door status unknown" : "Home status";
+      const healthClass = attention || !knownDoor ? "warn" : "ok";
+      $grid.className = "stitchell-overview";
+      $grid.removeAttribute("data-count");
+      $grid.style.gridTemplateColumns = "";
+      $grid.innerHTML = '<div class="overview-panel">'
+        +'<div class="overview-heading"><span>⌂ STITCHELL HOME</span><small>OVERVIEW</small></div>'
+        +'<div class="overview-health"><div class="symbol">⌂</div><div><strong>Home Overview</strong><span class="'+healthClass+'">'+health+'</span></div></div>'
+        +'<div class="overview-section"><span>WHO’S HOME</span><small>'+homeCount+' of 5'+(knownPeople.length<5?' · partial':'')+'</small></div>'
+        +personRows
+        +'<div class="overview-stat"><span>♙ Doors</span><span class="overview-value '+(doorState==="locked"?"ok":"warn")+'">'+doorText+'</span></div>'
+        +'<div class="overview-stat"><span>☼ Lights</span><span class="overview-value">'+lightText+'</span></div>'
+        +'<div class="overview-stat"><span>◉ Inside Temp</span><span class="overview-value">'+tempText+'</span></div>'
+        +'<div class="overview-actions"><span>← Swipe for rooms</span><span>TRUCK →</span></div>'
+        +'</div>';
+      showPanel("grid");
+    }
     function renderGrid() {
+      if (!detailScreen && cards[currentCardIndex]?.id === "home-overview") {
+        renderTabs();
+        renderHomeOverview();
+        return;
+      }
+      $grid.classList.remove("stitchell-overview");
       if (cards.length === 0 || !cards[currentCardIndex] || visibleItems().length === 0) {
         renderTabs();
         showPanel("empty");
