@@ -627,8 +627,10 @@
         throw new Error(`states ${res.status}`);
       }
       const all = await res.json();
+      if (!Array.isArray(all)) throw new Error("states response is not an array");
       const m = new Map();
-      for (const s of all) m.set(s.entity_id, s);
+      for (const s of all) if (s?.entity_id) m.set(s.entity_id, s);
+      setStatus(`States received: ${m.size} · Temp: ${m.has("sensor.hallway_hallway_temperature") ? "yes" : "no"}`);
       return m;
     }
 
@@ -669,7 +671,7 @@
         try { msg = JSON.parse(evt.data); } catch { return; }
         if (msg.type === "auth_ok") {
           reconnectAttempts = 0;
-          setStatus("Connected");
+          setStatus(`Connected · ${states.size} states · Temp ${states.has("sensor.hallway_hallway_temperature") ? "yes" : "no"}`);
         } else if (msg.type === "auth_invalid") {
           tokenInvalid();
         } else if (msg.type === "state_changed") {
@@ -1154,9 +1156,9 @@
           if (JSON.stringify(freshCards) !== JSON.stringify(cards)) {
             cards = freshCards;
             if (currentCardIndex >= cards.length) currentCardIndex = 0;
-            states = await fetchStates();
-            renderGrid();
           }
+          states = await fetchStates();
+          renderGrid();
         } catch (err) {
           setStatus(`Refresh failed: ${err.message}`);
         }
