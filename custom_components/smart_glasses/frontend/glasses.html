@@ -402,6 +402,7 @@
           ACTION("Master Bedroom","media_player.select_source",player,{destination:"master_bedroom"})];
       }
       const sceneTile = [NAV("Scenes","scenes")];
+      if (isRoom("truck", /ram 1500/i)) return [NAV("Vehicle Status","truck"),NAV("Remote Controls","truck-controls")];
       if (isRoom("living", /living room/i)) return [
         find("switch.living_room_switch_switch_1"), find("light.living_room"),
         NAV("TV Remote","remote"), NAV("Music","music"), NAV("Cameras","cameras"), ...sceneTile,
@@ -576,7 +577,9 @@
         throw new Error(`cards ${res.status}`);
       }
       const data = await res.json();
-      return data.cards ?? [];
+      const configured = data.cards ?? [];
+      // Vehicle is a standalone tab even when no Garage card was configured.
+      return [...configured.filter(c => c.id !== "truck"), {id:"truck",name:"Ram 1500",items:[]}];
     }
 
     async function fetchStates() {
