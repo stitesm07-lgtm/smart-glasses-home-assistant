@@ -852,7 +852,7 @@ def _room_shortcut_ids(cards: list[dict[str, Any]]) -> set[str]:
     return out
 
 
-def _card_entity_ids(cards: list[dict[str, Any]]) -> set[str]:
+def _card_entity_ids(hass: HomeAssistant, cards: list[dict[str, Any]]) -> set[str]:
     out: set[str] = set()
     for c in cards:
         for item in c.get("items", []):
@@ -933,7 +933,7 @@ def _glance_state_payloads_for_change(
     if not entity_id:
         return []
 
-    wanted = _card_entity_ids(cards)
+    wanted = _card_entity_ids(hass, cards)
     payloads: list[dict[str, Any]] = []
 
     if entity_id in wanted:
@@ -1117,7 +1117,7 @@ class GlanceStatesView(HomeAssistantView):
         _pairing, err = _require_glasses_pairing(self, request, hass)
         if err is not None:
             return err
-        wanted = _card_entity_ids(_store(hass).cards)
+        wanted = _card_entity_ids(hass, _store(hass).cards)
         out = []
         for eid in wanted:
             s = hass.states.get(eid)
