@@ -859,6 +859,9 @@ def _card_entity_ids(cards: list[dict[str, Any]]) -> set[str]:
             if item.get("type") == "entity" and isinstance(item.get("entity_id"), str):
                 out.add(item["entity_id"])
     out.update({"sensor.outdoor_front_ram_1500_fuel_remaining", "sensor.outdoor_front_ram_1500_driving_range", "sensor.outdoor_front_ram_1500_12v_battery", "sensor.outdoor_front_ram_1500_odometer", "sensor.outdoor_front_ram_1500_front_left_tire_pressure", "sensor.outdoor_front_ram_1500_front_right_tire_pressure", "sensor.outdoor_front_ram_1500_rear_left_tire_pressure", "sensor.outdoor_front_ram_1500_rear_right_tire_pressure", "sensor.outdoor_front_ram_1500_oil_life", "device_tracker.outdoor_front_ram_1500_location"})
+    # Explicit read-only Home Overview telemetry for paired glasses.
+    out.update({"person.matt_stites", "person.lacey_stites", "person.karson_stites", "person.kira_stites", "person.weston", "lock.schlage_connect_smart_deadbolt", "sensor.hallway_hallway_temperature"})
+    out.update(s.entity_id for s in hass.states.async_all("light"))
     # Read-only music state for the compact Spotify/speaker page.
     return out | _room_shortcut_ids(cards) | _GLASS_MUSIC_PLAYERS | _GLASS_TVS
 
