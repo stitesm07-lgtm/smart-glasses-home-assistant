@@ -1011,6 +1011,16 @@ _GLASS_TV_SOURCES = frozenset({"Netflix", "Disney+", "Prime Video", "Hulu", "Par
 _GLASS_TV_SERVICES = frozenset({"toggle", "turn_on", "turn_off", "volume_up", "volume_down", "volume_mute", "media_play", "media_pause", "select_source"})
 
 
+_GLASS_TRUCK_CONTROLS = frozenset({
+    ("switch", "turn_on", "switch.outdoor_front_ram_1500_engine"),
+    ("switch", "turn_off", "switch.outdoor_front_ram_1500_engine"),
+    ("lock", "lock", "lock.outdoor_front_ram_1500_doors_lock"),
+    ("lock", "unlock", "lock.outdoor_front_ram_1500_doors_lock"),
+    ("button", "press", "button.outdoor_front_ram_1500_lights_horn"),
+    ("button", "press", "button.outdoor_front_ram_1500_update_data"),
+})
+
+
 def _service_call_allowed(
     cards: list[dict[str, Any]], domain: str, service: str, target_eid: str | None
 ) -> bool:
@@ -1034,7 +1044,7 @@ def _service_call_allowed(
         return False
     # TV commands are limited to the two explicitly configured LG televisions.
     # The command payload itself is validated separately below.
-    if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
+    if (domain, service, target_eid) in _GLASS_TRUCK_CONTROLS:\n        return True\n    if domain == "light" and service == "turn_on" and target_eid == "light.stitchell_indoor_preset":
         return True
     if (domain, service, target_eid) in _GLASS_SCENE_ACTIONS:
         return True
@@ -1256,6 +1266,8 @@ class GlanceCallServiceView(HomeAssistantView):
             if raw_data and raw_data != {"skip_condition": False}:
                 return self.json_message("invalid automation options", status_code=403)
             service_data = {"skip_condition": False}
+        if (domain, service, target_eid) in _GLASS_TRUCK_CONTROLS and raw_data:
+            return self.json_message("vehicle commands accept no parameters", status_code=403)
         if raw_data and not service_data and (domain, service, target_eid) not in _GLASS_SCENE_ACTIONS:
             return self.json_message("unsupported service data", status_code=403)
         if not _service_call_allowed(_store(hass).cards, domain, service, target_eid):
