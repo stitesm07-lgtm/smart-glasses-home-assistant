@@ -372,6 +372,19 @@
         }
         return [NAV("Back to Room","back"), ...actions];
       }
+      if (detailScreen === "truck") return [
+        NAV("Back to Garage","back"),
+        find("sensor.outdoor_front_ram_1500_fuel_remaining"),
+        find("sensor.outdoor_front_ram_1500_driving_range"),
+        find("sensor.outdoor_front_ram_1500_12v_battery"),
+        find("sensor.outdoor_front_ram_1500_odometer"),
+        find("sensor.outdoor_front_ram_1500_front_left_tire_pressure"),
+        find("sensor.outdoor_front_ram_1500_front_right_tire_pressure"),
+        find("sensor.outdoor_front_ram_1500_rear_left_tire_pressure"),
+        find("sensor.outdoor_front_ram_1500_rear_right_tire_pressure"),
+        find("sensor.outdoor_front_ram_1500_oil_life"),
+        find("device_tracker.outdoor_front_ram_1500_location")
+      ];
       if (detailScreen === "patio") return [NAV("Back to Room","back"),
         find("light.front_patio_1"),find("light.front_patio_2"),find("light.front_patio_3")];
       if (detailScreen === "music") {
@@ -405,7 +418,7 @@
         find("light.stitchell_front_outdoor_lights"), find("light.stitchell_back_outdoor_lights"),
         NAV("Patio Lights","patio"), NAV("Cameras","cameras"), ...sceneTile];
       if (isRoom("garage", /garage/i)) return [
-        find("light.stitchell_garage_lights"), ...sceneTile];
+        find("light.stitchell_garage_lights"), NAV("Ram 1500","truck"), ...sceneTile];
       return configured;
     }
     function openDetail(page) {
@@ -775,7 +788,7 @@
       $tabs.dataset.focusMode = focusMode;
       const total = cards.length;
       const idx = currentCardIndex;
-      const name = detailScreen ? ({remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming",cameras:"Cameras","camera-front":"Front Door","camera-living":"Living Room"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
+      const name = detailScreen ? ({truck:"Ram 1500",remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming",cameras:"Cameras","camera-front":"Front Door","camera-living":"Living Room"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
       // Wrap-around previews so the user sees what swipe-left and
       // swipe-right will yield. Skip them entirely when there's only
       // one card to avoid showing "Office  Office  Office".
