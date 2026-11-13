@@ -373,7 +373,17 @@
         }
         return [NAV("Back to Room","back"), ...actions];
       }
-      if (detailScreen === "truck-controls") return [\n        NAV("Back to Truck","truck"),\n        CONFIRM_ACTION("Start Engine","switch.turn_on","switch.outdoor_front_ram_1500_engine"),\n        CONFIRM_ACTION("Stop Engine","switch.turn_off","switch.outdoor_front_ram_1500_engine"),\n        CONFIRM_ACTION("Lock Doors","lock.lock","lock.outdoor_front_ram_1500_doors_lock"),\n        CONFIRM_ACTION("Unlock Doors","lock.unlock","lock.outdoor_front_ram_1500_doors_lock"),\n        CONFIRM_ACTION("Horn / Lights","button.press","button.outdoor_front_ram_1500_lights_horn"),\n        ACTION("Refresh Vehicle","button.press","button.outdoor_front_ram_1500_update_data")\n      ];\n      if (detailScreen === "truck") return [\n        NAV("Remote Controls","truck-controls"),
+      if (detailScreen === "truck-controls") return [
+        NAV("Back to Truck","truck"),
+        CONFIRM_ACTION("Start Engine","switch.turn_on","switch.outdoor_front_ram_1500_engine"),
+        CONFIRM_ACTION("Stop Engine","switch.turn_off","switch.outdoor_front_ram_1500_engine"),
+        CONFIRM_ACTION("Lock Doors","lock.lock","lock.outdoor_front_ram_1500_doors_lock"),
+        CONFIRM_ACTION("Unlock Doors","lock.unlock","lock.outdoor_front_ram_1500_doors_lock"),
+        CONFIRM_ACTION("Horn / Lights","button.press","button.outdoor_front_ram_1500_lights_horn"),
+        ACTION("Refresh Vehicle","button.press","button.outdoor_front_ram_1500_update_data")
+      ];
+      if (detailScreen === "truck") return [
+        NAV("Remote Controls","truck-controls"),
         NAV("Back to Garage","back"),
         find("sensor.outdoor_front_ram_1500_fuel_remaining"),
         find("sensor.outdoor_front_ram_1500_driving_range"),
