@@ -325,7 +325,7 @@
     let detailScreen = null; // hidden panel, never added to room tabs
     const NAV = (name, page) => ({type:"nav", name, page});
     const ENTITY = (entity_id) => ({type:"entity",entity_id});
-    const ACTION = (name, action, target, data = null) => ({type:"action",name,action,target,data});
+    const ACTION = (name, action, target, data = null) => ({type:"action",name,action,target,data});\n    const CONFIRM_ACTION = (name, action, target) => ({...ACTION(name,action,target),confirm:true});
     // Preserve backend-configured cards. Virtual tiles are only UI shortcuts.
     function visibleItems() {
       const card = cards[currentCardIndex];
@@ -372,7 +372,7 @@
         }
         return [NAV("Back to Room","back"), ...actions];
       }
-      if (detailScreen === "truck") return [
+      if (detailScreen === "truck-controls") return [\n        NAV("Back to Truck","truck"),\n        CONFIRM_ACTION("Start Engine","switch.turn_on","switch.outdoor_front_ram_1500_engine"),\n        CONFIRM_ACTION("Stop Engine","switch.turn_off","switch.outdoor_front_ram_1500_engine"),\n        CONFIRM_ACTION("Lock Doors","lock.lock","lock.outdoor_front_ram_1500_doors_lock"),\n        CONFIRM_ACTION("Unlock Doors","lock.unlock","lock.outdoor_front_ram_1500_doors_lock"),\n        CONFIRM_ACTION("Horn / Lights","button.press","button.outdoor_front_ram_1500_lights_horn"),\n        ACTION("Refresh Vehicle","button.press","button.outdoor_front_ram_1500_update_data")\n      ];\n      if (detailScreen === "truck") return [\n        NAV("Remote Controls","truck-controls"),
         NAV("Back to Garage","back"),
         find("sensor.outdoor_front_ram_1500_fuel_remaining"),
         find("sensor.outdoor_front_ram_1500_driving_range"),
@@ -788,7 +788,7 @@
       $tabs.dataset.focusMode = focusMode;
       const total = cards.length;
       const idx = currentCardIndex;
-      const name = detailScreen ? ({truck:"Ram 1500",remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming",cameras:"Cameras","camera-front":"Front Door","camera-living":"Living Room"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
+      const name = detailScreen ? ({"truck-controls":"Truck Controls",truck:"Ram 1500",remote:"TV Remote","remote-help":"Remote Setup",scenes:"Scenes",music:"Music",streaming:"Streaming",cameras:"Cameras","camera-front":"Front Door","camera-living":"Living Room"}[detailScreen] || "Controls") : (cards[idx]?.name ?? "");
       // Wrap-around previews so the user sees what swipe-left and
       // swipe-right will yield. Skip them entirely when there's only
       // one card to avoid showing "Office  Office  Office".
@@ -988,7 +988,7 @@
       }
       if (item.type === "action") {
         const live = item.target && states.get(item.target);
-        if (live && ["unavailable", "unknown"].includes(live.state) && item.action !== "media_player.toggle") {
+        if (live && ["unavailable", "unknown"].includes(live.state) && item.action !== "media_player.toggle" && !["switch.outdoor_front_ram_1500_engine","lock.outdoor_front_ram_1500_doors_lock","button.outdoor_front_ram_1500_lights_horn","button.outdoor_front_ram_1500_update_data"].includes(item.target)) {
           setStatus("Device unavailable — command not sent");
           return;
         }
